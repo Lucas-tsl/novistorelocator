@@ -1,177 +1,1242 @@
-/* overright */
-.leaflet-popup-content-wrapper .leaflet-popup-content {
-    margin-bottom: 13px;
+/*
+ * NOVI Store Locator 1.4.0
+ * Palette strictement noir / blanc / gris. Styles limités au conteneur .novi-sl.
+ */
+
+/* ---------- Thème clair (valeurs par défaut) ---------- */
+
+.novi-sl {
+	--novi-sl-bg: transparent;
+	--novi-sl-sticky-bg: #fff;
+	--novi-sl-text: #000;
+	--novi-sl-muted: #5c5c5c;
+	--novi-sl-surface: #fff;
+	--novi-sl-raised: #f5f5f5;
+	--novi-sl-hover: #efefef;
+	--novi-sl-line: #e4e4e4;
+	--novi-sl-border: #cdcdcd;
+	--novi-sl-accent: #000;
+	--novi-sl-accent-text: #fff;
+	--novi-sl-focus: #000;
+	--novi-sl-panel: rgba(255, 255, 255, 0.94);
+	--novi-sl-panel-solid: #fff;
+	--novi-sl-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+	--novi-sl-pin: #000;
+	--novi-sl-pin-stroke: #fff;
+	--novi-sl-cluster-ring: rgba(0, 0, 0, 0.18);
+	--novi-sl-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+	box-sizing: border-box;
+	max-width: 1200px;
+	margin: 0 auto 80px;
+	color: var(--novi-sl-text);
+	background: var(--novi-sl-bg);
+	font-family: inherit; /* Police du site : le store locator se fond dans la page. */
+	-webkit-font-smoothing: antialiased;
 }
 
-.store-locator{
-    font-family: 'Poppins', sans-serif;
-    color:black;
+/* ---------- Largeur dans la page ----------
+ * Les thèmes « blocs » limitent le contenu à la largeur du texte (.is-layout-constrained,
+ * --wp--style--global--content-size). Le store locator utilise la largeur « large » du thème
+ * (alignwide), ou toute la largeur avec [store_locator largeur="pleine"].
+ */
+
+.novi-sl.alignwide,
+.is-layout-constrained > .novi-sl.alignwide {
+	width: 100%;
+	max-width: var(--wp--style--global--wide-size, 1200px);
+	margin-left: auto !important;
+	margin-right: auto !important;
 }
 
-.popup-marker img{
-    width: 100%;
+.novi-sl.alignfull,
+.is-layout-constrained > .novi-sl.alignfull {
+	width: auto;
+	max-width: none;
+	padding-left: var(--wp--style--root--padding-left, 24px);
+	padding-right: var(--wp--style--root--padding-right, 24px);
 }
 
-.popup-info{
-    display: flex;
-    flex-direction: column;
-    text-align: center;
+/* ---------- Thème sombre ---------- */
+
+.novi-sl--dark {
+	--novi-sl-bg: #000;
+	--novi-sl-sticky-bg: #000;
+	--novi-sl-text: #fff;
+	--novi-sl-muted: #ababab;
+	--novi-sl-surface: #0b0b0b;
+	--novi-sl-raised: #151515;
+	--novi-sl-hover: #1f1f1f;
+	--novi-sl-line: #262626;
+	--novi-sl-border: #3d3d3d;
+	--novi-sl-accent: #fff;
+	--novi-sl-accent-text: #000;
+	--novi-sl-focus: #fff;
+	--novi-sl-panel: rgba(8, 8, 8, 0.9);
+	--novi-sl-panel-solid: #080808;
+	--novi-sl-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+	--novi-sl-pin: #fff;
+	--novi-sl-pin-stroke: #000;
+	--novi-sl-cluster-ring: rgba(255, 255, 255, 0.22);
+
+	padding: 24px;
+	border-radius: 16px;
+	color-scheme: dark;
 }
 
-.map-cont a.sl-btn{
-    padding: 7px 10px 5px 10px;
-    background-color: blueviolet;
-    color: white;
-    font-weight: 700;
-    border-radius: 50px;
-    margin-top: 10px;
-    text-decoration: none;
+.novi-sl *,
+.novi-sl *::before,
+.novi-sl *::after {
+	box-sizing: border-box;
 }
 
-.store-locator .hidden{
-    display:none;
+.novi-sl p,
+.novi-sl h2,
+.novi-sl h3,
+.novi-sl dl,
+.novi-sl dd,
+.novi-sl ul,
+.novi-sl ol {
+	margin: 0;
 }
 
-.store-locator .flex{
-    display:flex;
+.novi-sl [hidden] {
+	display: none !important;
 }
 
-.store-locator .shearchbar{
-    width: fit-content;
-    margin: 0 auto;
-    width: 70vw;
-    height: 30px;
-    margin-bottom: 10px;
+.novi-sl :focus-visible {
+	outline: 2px solid var(--novi-sl-focus);
+	outline-offset: 2px;
 }
 
-.store-locator .shearchbar #label{
-    width: 90%;
+.novi-sl a {
+	color: inherit;
 }
 
-.store-locator .shearchbar #btn{
-    width: 10%;
+/* ---------- Boutons ---------- */
+
+.novi-sl .novi-sl__btn,
+.novi-sl__locate,
+.novi-sl__panel-open {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 9px 16px;
+	font: inherit;
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 1.2;
+	letter-spacing: 0.04em;
+	color: var(--novi-sl-accent-text);
+	background: var(--novi-sl-accent);
+	border: 1px solid var(--novi-sl-accent);
+	border-radius: 50px;
+	text-decoration: none;
+	cursor: pointer;
+	user-select: none;
+	list-style: none;
+	transition: opacity 0.2s, transform 0.2s var(--novi-sl-ease), background-color 0.2s, color 0.2s;
 }
 
-.store-locator #map{
-    height: 70vh;
-    width: 70%;
-    position: relative;
-    z-index: 0;
+.novi-sl .novi-sl__btn:hover,
+.novi-sl__locate:hover,
+.novi-sl__panel-open:hover {
+	opacity: 0.85;
 }
 
-.store-locator .map-cont{
-    margin: 0 auto;
-    justify-content: space-between;
-    gap: 25px;
-    width: 100%;
+.novi-sl .novi-sl__btn:active,
+.novi-sl__locate:active {
+	transform: scale(0.97);
 }
 
-.store-locator .sl-card{
-    border-radius: 25px;
-    box-shadow: 0px 5px 7px 1px rgba(0, 0, 0, 0.2);
-    padding:7% 20px 7% 20px;
-    /*height: 25%;*/
-    font-weight: 700;
-    text-align: center;
-    margin-bottom: 2%;
+.novi-sl .novi-sl__btn--ghost {
+	color: var(--novi-sl-text);
+	background: transparent;
+	border-color: var(--novi-sl-border);
 }
 
-.store-locator .sl-card .sl-card-title{
-    font-size: 16px;
-    line-height: 18px;
-    margin-bottom: 3px;
+.novi-sl .novi-sl__btn--ghost:hover {
+	opacity: 1;
+	border-color: var(--novi-sl-text);
 }
 
-.store-locator .sl-card .sl-card-subtitle{
-    font-size: 12px;
-    line-height: 13px;
+/* ---------- Recherche ---------- */
+
+.novi-sl__search {
+	margin-bottom: 12px;
 }
 
-.store-locator .main-cont{
-    display: flex;
-    flex-direction: column;
-    max-width: 1100px;
-    margin: 0 auto;
+.novi-sl__label {
+	display: block;
+	margin-bottom: 8px;
+	font-size: 18px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
 }
 
-.store-locator .listinfo{
-    display: flex;
-    flex-direction: column;
-    height: 70vh;
-    width: 30%;
-    padding: 20px;
-    overflow-x: auto;
+.novi-sl__bar {
+	display: flex;
+	gap: 10px;
+	align-items: stretch;
 }
 
-.store-locator .sl-card > div:last-of-type {
-    margin-bottom: 15px;
+.novi-sl__field {
+	position: relative;
+	flex: 1;
+	min-width: 0;
 }
 
-.store-locator .listinfo-title {
-    font-weight: 700;
-    font-size: 25px;
+.novi-sl__input {
+	width: 100%;
+	margin: 0;
+	padding: 12px 16px;
+	font: inherit;
+	font-size: 16px;
+	color: var(--novi-sl-text);
+	background: var(--novi-sl-surface);
+	border: 1px solid var(--novi-sl-border);
+	border-radius: 10px;
+	transition: border-color 0.2s;
 }
 
-.store-locator .listinfo-subtitle {
-    font-weight: 700;
-    font-size: 17px;
-    margin-bottom:20px;
+/* Croix d'effacement native (bleue dans Chrome) : remplacée par une croix noir/blanc. */
+.novi-sl__input::-webkit-search-cancel-button {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 14px;
+	height: 14px;
+	cursor: pointer;
+	background: var(--novi-sl-text);
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
-.store-locator .map-cont{
-    margin-bottom: 100px;
+.novi-sl__input::placeholder {
+	color: var(--novi-sl-muted);
+	opacity: 1;
 }
 
-.store-locator .search-fields{
-    margin: 0 auto;
-    width: 100%;
-    position: relative;
+.novi-sl__input:hover,
+.novi-sl__input:focus {
+	border-color: var(--novi-sl-text);
 }
 
-.store-locator .search-fields input{
-    width: 100%;
-    margin-bottom: 10px;
+.novi-sl__locate {
+	padding: 0 18px;
+	font-size: 14px;
+	letter-spacing: 0;
+	white-space: nowrap;
 }
 
-.store-locator #searchResults{
-    margin: 0;
-    position: absolute;
-    z-index: 10000;
-    background: rgba(255,255,255,0.9);
-    width: 100%;
-    max-height: 45vh;
-    overflow: overlay;
+.novi-sl__locate:disabled {
+	opacity: 0.6;
+	cursor: progress;
 }
 
-.store-locator #searchResults div{
-    padding: 5px 25px;
-    border-bottom: 1px solid #cbcbcb;
-    font-weight: 400;
-    font-size: 16px;
-    transition: 0.3s;
+.novi-sl__suggestions {
+	position: absolute;
+	z-index: 1000;
+	top: calc(100% + 4px);
+	left: 0;
+	right: 0;
+	max-height: 45vh;
+	margin: 0;
+	padding: 4px;
+	overflow-y: auto;
+	list-style: none;
+	background: var(--novi-sl-surface);
+	border: 1px solid var(--novi-sl-border);
+	border-radius: 10px;
+	box-shadow: var(--novi-sl-shadow);
+	animation: novi-sl-drop 0.18s var(--novi-sl-ease);
 }
 
-.store-locator #searchResults div:hover{
-    font-weight: 700;
-    font-size: 17px;
-    transition: 0.3s;
+.novi-sl__suggestion {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 0;
+	padding: 9px 14px;
+	font-size: 15px;
+	border-radius: 6px;
+	cursor: pointer;
 }
 
-.store-locator input{
-    box-sizing:border-box;
-    font-size:17px;
+.novi-sl__suggestion:hover,
+.novi-sl__suggestion.is-active {
+	background: var(--novi-sl-hover);
 }
+
+.novi-sl__suggestion--message,
+.novi-sl__suggestion--message:hover {
+	color: var(--novi-sl-muted);
+	background: transparent;
+	cursor: default;
+}
+
+.novi-sl__suggestion-meta {
+	color: var(--novi-sl-muted);
+	font-size: 13px;
+	white-space: nowrap;
+}
+
+.novi-sl__suggestion--store .novi-sl__suggestion-main {
+	font-weight: 600;
+}
+
+/* ---------- Filtres ---------- */
+
+.novi-sl__filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0 0 12px;
+}
+
+.novi-sl__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 7px 14px;
+	font: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.2;
+	color: var(--novi-sl-text);
+	background: transparent;
+	border: 1px solid var(--novi-sl-border);
+	border-radius: 50px;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.novi-sl__chip:hover {
+	border-color: var(--novi-sl-text);
+}
+
+.novi-sl__chip[aria-pressed="true"] {
+	color: var(--novi-sl-accent-text);
+	background: var(--novi-sl-accent);
+	border-color: var(--novi-sl-accent);
+}
+
+.novi-sl__chip--service::before {
+	content: "✦";
+	font-size: 10px;
+}
+
+.novi-sl__chip-count {
+	font-size: 11px;
+	font-weight: 400;
+	opacity: 0.7;
+}
+
+.novi-sl__status {
+	min-height: 1.4em;
+	margin: 0 0 12px;
+	font-size: 14px;
+	color: var(--novi-sl-muted);
+}
+
+/* Information déjà affichée par le titre de la liste : réservée aux lecteurs d'écran (ordinateur). */
+@media screen and (min-width: 900px) {
+	.novi-sl__status.is-info {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		min-height: 0;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+		border: 0;
+	}
+}
+
+.novi-sl__status.is-error {
+	color: var(--novi-sl-text);
+}
+
+.novi-sl__status.is-error::before {
+	content: "⚠ ";
+}
+
+/* ---------- Carte plein cadre + liste superposée ---------- */
+
+.novi-sl__body {
+	position: relative;
+	height: 78vh;
+	min-height: 560px;
+	max-height: 900px;
+	overflow: hidden;
+	border: 1px solid var(--novi-sl-line);
+	border-radius: 14px;
+}
+
+.novi-sl__map {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	background: var(--novi-sl-raised);
+}
+
+.novi-sl__panel {
+	position: absolute;
+	z-index: 2;
+	top: 16px;
+	bottom: 16px;
+	left: 16px;
+	width: min(380px, 42%);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	background: var(--novi-sl-panel-solid);
+	border: 1px solid var(--novi-sl-line);
+	border-radius: 12px;
+	box-shadow: var(--novi-sl-shadow);
+	transition: transform 0.35s var(--novi-sl-ease), opacity 0.25s, visibility 0s;
+}
+
+.novi-sl.is-panel-collapsed .novi-sl__panel {
+	transform: translateX(calc(-100% - 24px));
+	opacity: 0;
+	visibility: hidden;
+	transition: transform 0.35s var(--novi-sl-ease), opacity 0.25s, visibility 0s 0.35s;
+}
+
+.novi-sl__panel-head {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 14px 16px 12px;
+	background: var(--novi-sl-panel-solid);
+	border-bottom: 1px solid var(--novi-sl-line);
+}
+
+.novi-sl__panel-title {
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.3;
+	letter-spacing: -0.01em;
+}
+
+.novi-sl__panel-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 6px;
+	font: inherit;
+	font-size: 12px;
+	color: var(--novi-sl-muted);
+	background: none;
+	border: 0;
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+.novi-sl__panel-toggle:hover {
+	color: var(--novi-sl-text);
+}
+
+.novi-sl__panel-open {
+	position: absolute;
+	z-index: 2;
+	top: 16px;
+	left: 16px;
+	box-shadow: var(--novi-sl-shadow);
+	animation: novi-sl-in 0.3s var(--novi-sl-ease);
+}
+
+.novi-sl__empty {
+	padding: 20px 16px;
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--novi-sl-muted);
+}
+
+.novi-sl__results {
+	padding: 0;
+	list-style: none;
+}
+
+/* ---------- « Voir plus » et « Rechercher dans cette zone » ---------- */
+
+.novi-sl .novi-sl__more-results {
+	display: flex;
+	width: calc(100% - 32px);
+	margin: 8px 16px 16px;
+}
+
+.novi-sl__area {
+	position: absolute;
+	z-index: 3;
+	top: 16px;
+	left: 50%;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 18px;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--novi-sl-text);
+	background: var(--novi-sl-surface);
+	border: 1px solid var(--novi-sl-border);
+	border-radius: 50px;
+	box-shadow: var(--novi-sl-shadow);
+	cursor: pointer;
+	white-space: nowrap;
+	transform: translateX(-50%);
+	animation: novi-sl-drop-center 0.25s var(--novi-sl-ease);
+	transition: border-color 0.2s;
+}
+
+.novi-sl__area:hover {
+	border-color: var(--novi-sl-text);
+}
+
+/* Centré sur la partie visible de la carte, à droite de la liste. */
+.novi-sl:not(.is-panel-collapsed) .novi-sl__area {
+	left: calc((100% + min(380px, 42%) + 16px) / 2);
+}
+
+@keyframes novi-sl-drop-center {
+	from {
+		opacity: 0;
+		transform: translate(-50%, -6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(-50%);
+	}
+}
+
+/* ---------- Fiches (typographie hiérarchisée) ---------- */
+
+.novi-sl__card {
+	position: relative;
+	margin: 0;
+	padding: 16px 16px 16px 18px;
+	border-bottom: 1px solid var(--novi-sl-line);
+	cursor: pointer;
+	transition: background-color 0.2s;
+	animation: novi-sl-in 0.4s var(--novi-sl-ease) both;
+	animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+.novi-sl__card:last-child {
+	border-bottom: 0;
+}
+
+.novi-sl__card::before {
+	content: "";
+	position: absolute;
+	top: 12px;
+	bottom: 12px;
+	left: 0;
+	width: 3px;
+	background: var(--novi-sl-text);
+	border-radius: 0 3px 3px 0;
+	transform: scaleY(0);
+	transition: transform 0.25s var(--novi-sl-ease);
+}
+
+.novi-sl__card:hover,
+.novi-sl__card.is-hot {
+	background: var(--novi-sl-hover);
+}
+
+.novi-sl__card.is-active::before {
+	transform: scaleY(1);
+}
+
+.novi-sl__card-top {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 2px;
+}
+
+.novi-sl__eyebrow {
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.3;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--novi-sl-muted);
+}
+
+.novi-sl__distance {
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	color: var(--novi-sl-muted);
+	white-space: nowrap;
+}
+
+.novi-sl__card-heading {
+	margin: 0 0 4px;
+	font-size: inherit;
+}
+
+.novi-sl__card-title {
+	display: block;
+	width: 100%;
+	padding: 0;
+	font: inherit;
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 1.25;
+	letter-spacing: -0.01em;
+	text-align: left;
+	color: var(--novi-sl-text);
+	background: none;
+	border: 0;
+	cursor: pointer;
+}
+
+.novi-sl__card-title:focus:not(:focus-visible) {
+	outline: none;
+}
+
+.novi-sl__address {
+	font-size: 13px;
+	line-height: 1.45;
+	color: var(--novi-sl-muted);
+}
+
+.novi-sl__open-state {
+	margin-top: 6px !important;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.novi-sl__open-state::before {
+	content: "●";
+	margin-right: 6px;
+	font-size: 9px;
+	vertical-align: 2px;
+}
+
+.novi-sl__open-state.is-closed {
+	font-weight: 400;
+	color: var(--novi-sl-muted);
+}
+
+.novi-sl__open-state.is-closed::before {
+	content: "○";
+}
+
+.novi-sl__contact {
+	margin-top: 4px !important;
+	font-size: 13px;
+}
+
+.novi-sl__contact a,
+.novi-sl a.novi-sl__more {
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 3px;
+}
+
+.novi-sl__card-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 8px 16px;
+	margin-top: 12px;
+}
+
+.novi-sl a.novi-sl__more {
+	padding: 9px 0;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+.novi-sl a.novi-sl__more:hover {
+	text-decoration-thickness: 2px;
+}
+
+/* ---------- Menu « J'Y VAIS » ---------- */
+
+.novi-sl__go {
+	margin: 0;
+}
+
+.novi-sl__go > summary::-webkit-details-marker {
+	display: none;
+}
+
+.novi-sl__go-menu {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 8px;
+	animation: novi-sl-drop 0.2s var(--novi-sl-ease);
+}
+
+.novi-sl .novi-sl__go-link {
+	display: inline-block;
+	padding: 6px 12px;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.2;
+	color: var(--novi-sl-text);
+	background: var(--novi-sl-raised);
+	border: 1px solid var(--novi-sl-border);
+	border-radius: 50px;
+	text-decoration: none;
+	transition: border-color 0.2s;
+}
+
+.novi-sl .novi-sl__go-link:hover {
+	border-color: var(--novi-sl-text);
+}
+
+/* ---------- Marqueurs ---------- */
+
+.novi-sl-pin,
+.novi-sl-cluster,
+.novi-sl-user {
+	background: none;
+	border: 0;
+}
+
+.novi-sl-pin svg {
+	display: block;
+	overflow: visible;
+	transform-origin: 50% 100%;
+	transition: transform 0.22s var(--novi-sl-ease);
+	filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+
+.novi-sl-pin__body {
+	fill: var(--novi-sl-pin);
+	stroke: var(--novi-sl-pin-stroke);
+	stroke-width: 2;
+}
+
+.novi-sl-pin__dot {
+	fill: var(--novi-sl-pin-stroke);
+}
+
+.novi-sl-pin.is-hot svg {
+	transform: scale(1.22) translateY(-2px);
+}
+
+.novi-sl-pin.is-active svg {
+	transform: scale(1.32);
+	animation: novi-sl-bounce 0.5s var(--novi-sl-ease);
+}
+
+.novi-sl-cluster span {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	font-family: inherit;
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 1;
+	color: var(--novi-sl-pin-stroke);
+	background: var(--novi-sl-pin);
+	border: 2px solid var(--novi-sl-pin-stroke);
+	border-radius: 50%;
+	box-shadow: 0 0 0 5px var(--novi-sl-cluster-ring);
+	transition: transform 0.22s var(--novi-sl-ease);
+}
+
+.novi-sl-cluster.is-hot span {
+	transform: scale(1.15);
+}
+
+.novi-sl-user__dot,
+.novi-sl-user__pulse {
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+}
+
+.novi-sl-user__dot {
+	inset: 4px;
+	background: var(--novi-sl-pin);
+	border: 3px solid var(--novi-sl-pin-stroke);
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.novi-sl-user__pulse {
+	background: var(--novi-sl-cluster-ring);
+	animation: novi-sl-pulse 2s ease-out infinite;
+}
+
+/* ---------- Contrôles Leaflet et popups ---------- */
+
+.novi-sl .leaflet-bar {
+	border: 1px solid var(--novi-sl-border);
+	border-radius: 10px;
+	overflow: hidden;
+	box-shadow: var(--novi-sl-shadow);
+}
+
+.novi-sl .leaflet-bar a,
+.novi-sl .leaflet-bar a:hover {
+	color: var(--novi-sl-text);
+	background: var(--novi-sl-surface);
+	border-bottom-color: var(--novi-sl-line);
+}
+
+.novi-sl .leaflet-bar a:hover {
+	background: var(--novi-sl-hover);
+}
+
+.novi-sl .leaflet-container .leaflet-control-attribution {
+	color: var(--novi-sl-muted);
+	background: var(--novi-sl-panel);
+}
+
+.novi-sl .leaflet-container .leaflet-control-attribution a {
+	color: var(--novi-sl-text);
+}
+
+.novi-sl .leaflet-popup-content-wrapper,
+.novi-sl .leaflet-popup-tip {
+	color: var(--novi-sl-text);
+	background: var(--novi-sl-surface);
+	box-shadow: var(--novi-sl-shadow);
+}
+
+.novi-sl .leaflet-popup-content-wrapper {
+	border: 1px solid var(--novi-sl-line);
+	border-radius: 12px;
+}
+
+.novi-sl .leaflet-popup-content {
+	margin: 14px 16px;
+	font-family: inherit;
+	line-height: 1.4;
+}
+
+.novi-sl .leaflet-container a.leaflet-popup-close-button {
+	color: var(--novi-sl-muted);
+}
+
+.novi-sl-popup__title {
+	margin: 2px 0 4px !important;
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.novi-sl-popup .novi-sl__card-actions {
+	margin-top: 10px;
+}
+
+.novi-sl__map-hint {
+	position: absolute;
+	inset: 0;
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	font-size: 16px;
+	font-weight: 600;
+	text-align: center;
+	color: #fff;
+	background: rgba(0, 0, 0, 0.6);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.25s;
+}
+
+.novi-sl__map-hint.is-visible {
+	opacity: 1;
+}
+
+/* ---------- Fiche magasin (fenêtre de détail) ---------- */
+
+.novi-sl__modal {
+	width: min(560px, calc(100vw - 32px));
+	max-height: calc(100vh - 48px);
+	padding: 0;
+	overflow: auto;
+	color: var(--novi-sl-text);
+	background: var(--novi-sl-surface);
+	border: 1px solid var(--novi-sl-line);
+	border-radius: 16px;
+	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+}
+
+/* Fiche rendue par le serveur avant le chargement du script : centrée comme la version modale. */
+.novi-sl__modal[open] {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	margin: auto;
+}
+
+.novi-sl__modal::backdrop {
+	background: rgba(0, 0, 0, 0.62);
+	-webkit-backdrop-filter: blur(3px);
+	backdrop-filter: blur(3px);
+	animation: novi-sl-fade 0.25s ease;
+}
+
+.novi-sl__modal[open] .novi-sl__modal-inner {
+	animation: novi-sl-rise 0.3s var(--novi-sl-ease);
+}
+
+.novi-sl__modal-inner {
+	position: relative;
+	padding: 32px 28px 28px;
+}
+
+.novi-sl__modal-close {
+	position: absolute;
+	top: 14px;
+	right: 14px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	color: var(--novi-sl-text);
+	background: transparent;
+	border: 1px solid var(--novi-sl-border);
+	border-radius: 50%;
+	cursor: pointer;
+	transition: border-color 0.2s, transform 0.2s var(--novi-sl-ease);
+}
+
+.novi-sl__modal-close:hover {
+	border-color: var(--novi-sl-text);
+	transform: rotate(90deg);
+}
+
+.novi-sl__modal-title {
+	margin: 4px 48px 6px 0 !important;
+	font-size: 26px;
+	font-weight: 600;
+	line-height: 1.15;
+	letter-spacing: -0.02em;
+}
+
+.novi-sl__facts {
+	display: grid;
+	gap: 18px;
+	margin-top: 22px !important;
+	padding-top: 20px;
+	border-top: 1px solid var(--novi-sl-line);
+}
+
+.novi-sl__fact dt {
+	margin-bottom: 4px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--novi-sl-muted);
+}
+
+.novi-sl__fact dd {
+	font-size: 15px;
+	line-height: 1.5;
+}
+
+.novi-sl__fact address {
+	font-style: normal;
+}
+
+.novi-sl__week {
+	width: 100%;
+	margin: 0;
+	border-collapse: collapse;
+	font-size: 14px;
+	font-variant-numeric: tabular-nums;
+}
+
+.novi-sl__week th,
+.novi-sl__week td {
+	padding: 4px 0;
+	text-align: left;
+	font-weight: 400;
+	border: 0;
+	background: none;
+}
+
+.novi-sl__week td {
+	text-align: right;
+	color: var(--novi-sl-muted);
+}
+
+.novi-sl__week tr.is-today th,
+.novi-sl__week tr.is-today td {
+	font-weight: 700;
+	color: var(--novi-sl-text);
+}
+
+.novi-sl__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 0;
+	list-style: none;
+}
+
+.novi-sl__tags li {
+	margin: 0;
+	padding: 4px 10px;
+	font-size: 12px;
+	border: 1px solid var(--novi-sl-border);
+	border-radius: 50px;
+}
+
+.novi-sl__sheet-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 10px;
+	margin-top: 24px;
+	padding-top: 20px;
+	border-top: 1px solid var(--novi-sl-line);
+}
+
+/* ---------- Bascule Carte / Liste (mobile uniquement) ---------- */
+
+.novi-sl__views {
+	display: none;
+}
+
+/* ---------- Animations ---------- */
+
+@keyframes novi-sl-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes novi-sl-drop {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes novi-sl-rise {
+	from {
+		opacity: 0;
+		transform: translateY(16px) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes novi-sl-fade {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes novi-sl-bounce {
+	0% {
+		transform: scale(1);
+	}
+	45% {
+		transform: scale(1.45) translateY(-6px);
+	}
+	100% {
+		transform: scale(1.32);
+	}
+}
+
+@keyframes novi-sl-pulse {
+	0% {
+		transform: scale(0.6);
+		opacity: 1;
+	}
+	100% {
+		transform: scale(2.4);
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.novi-sl *,
+	.novi-sl *::before,
+	.novi-sl *::after,
+	.novi-sl__modal::backdrop {
+		animation: none !important;
+		transition: none !important;
+	}
+}
+
+/* ---------- Mobile ---------- */
 
 @media screen and (max-width: 899px) {
-    .store-locator .map-cont{
-        flex-direction: column;
-    }
-    .store-locator .listinfo {
-        width: 90%;
-        margin: 0 auto;
-        height: auto;
-    }
-    .store-locator #map {
-        width: 100%;
-    }
+	.novi-sl--dark {
+		padding: 16px;
+	}
+
+	.novi-sl__search {
+		position: sticky;
+		top: var(--novi-sl-sticky-top, 0);
+		z-index: 5;
+		margin: 0 -4px 10px;
+		padding: 8px 4px;
+		background: var(--novi-sl-sticky-bg);
+	}
+
+	.novi-sl__views {
+		display: flex;
+		margin-top: 10px;
+		padding: 3px;
+		background: var(--novi-sl-surface);
+		border: 1px solid var(--novi-sl-border);
+		border-radius: 50px;
+	}
+
+	.novi-sl__view {
+		flex: 1;
+		padding: 8px 12px;
+		font: inherit;
+		font-size: 14px;
+		font-weight: 700;
+		color: var(--novi-sl-text);
+		background: transparent;
+		border: 0;
+		border-radius: 50px;
+		cursor: pointer;
+		transition: background-color 0.2s, color 0.2s;
+	}
+
+	.novi-sl__view[aria-pressed="true"] {
+		color: var(--novi-sl-accent-text);
+		background: var(--novi-sl-accent);
+	}
+
+	.novi-sl__filters {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		padding-bottom: 4px;
+		scrollbar-width: none;
+	}
+
+	.novi-sl__filters::-webkit-scrollbar {
+		display: none;
+	}
+
+	.novi-sl__body {
+		height: auto;
+		min-height: 0;
+		max-height: none;
+		overflow: visible;
+		border: 0;
+		border-radius: 0;
+	}
+
+	.novi-sl__map {
+		position: relative;
+		height: 62vh;
+		min-height: 360px;
+		border: 1px solid var(--novi-sl-line);
+		border-radius: 12px;
+		overflow: hidden;
+	}
+
+	.novi-sl__panel,
+	.novi-sl.is-panel-collapsed .novi-sl__panel {
+		position: static;
+		width: 100%;
+		overflow: visible;
+		background: transparent;
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
+		border: 0;
+		box-shadow: none;
+		transform: none;
+		opacity: 1;
+		visibility: visible;
+	}
+
+	.novi-sl__panel-head,
+	.novi-sl__panel-open {
+		display: none !important;
+	}
+
+	.novi-sl__card {
+		padding: 16px 4px 16px 14px;
+	}
+
+	.novi-sl:not(.is-panel-collapsed) .novi-sl__area {
+		left: 50%;
+	}
+
+	.novi-sl .novi-sl__more-results {
+		width: 100%;
+		margin: 12px 0 0;
+	}
+
+	.novi-sl[data-view="list"] .novi-sl__area,
+	.novi-sl[data-view="list"] .novi-sl__map,
+	.novi-sl[data-view="map"] .novi-sl__panel {
+		display: none;
+	}
+
+	.novi-sl__modal {
+		width: 100vw;
+		max-width: 100vw;
+		max-height: 92vh;
+		margin: auto auto 0;
+		border-radius: 18px 18px 0 0;
+	}
+
+	.novi-sl__modal-inner {
+		padding: 28px 20px 24px;
+	}
+}
+
+@media screen and (max-width: 520px) {
+	.novi-sl__bar {
+		flex-direction: column;
+	}
+
+	.novi-sl__locate {
+		padding: 11px 16px;
+	}
+}
+
+/* ---------- [store_locator_list] ---------- */
+
+.novi-sl-list ul {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	gap: 16px;
+	margin: 0 0 1.5em;
+	padding: 0;
+	list-style: none;
+}
+
+.novi-sl-list li {
+	margin: 0;
+	line-height: 1.45;
 }

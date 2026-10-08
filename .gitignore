@@ -1,2 +1,7 @@
-# Clé API et réglages locaux : ne jamais versionner
+# Clé API et réglages locaux de la 1.3 : ne jamais versionner
 assets/json/settings/settings.json
+
+# Paquets générés et dépendances de test
+dist/
+node_modules/
+e2e-captures/
