@@ -27,6 +27,7 @@
 - Liste latérale défilant verticalement ; plus de saut de mise en page au survol des suggestions.
 
 ### Expérience utilisateur
+- Thème sombre (fond noir, texte blanc) par défaut, thème clair au choix dans les paramètres ou par page (`[store_locator theme="light"]`).
 - Bouton « Autour de moi » : la position n'est plus demandée dès l'ouverture de la page (elle est utilisée automatiquement seulement si le visiteur l'a déjà autorisée).
 - Distance affichée sur chaque fiche, téléphone cliquable, lien vers le site web.
 - Recherche par nom de magasin et par ville des magasins hors de France (Belgique, Luxembourg, Suisse…), codes postaux saisis sans le zéro initial.

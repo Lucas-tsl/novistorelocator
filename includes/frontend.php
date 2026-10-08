@@ -123,7 +123,15 @@ function novi_sl_shortcode( $atts ) {
 	++$instance;
 
 	$s    = novi_sl_get_settings();
-	$atts = shortcode_atts( array( 'results' => $s['results_count'] ), $atts, 'store_locator' );
+	$atts = shortcode_atts(
+		array(
+			'results' => $s['results_count'],
+			'theme'   => $s['theme'],
+		),
+		$atts,
+		'store_locator'
+	);
+	$theme = 'light' === $atts['theme'] ? 'light' : 'dark';
 
 	novi_sl_enqueue_assets();
 
@@ -139,7 +147,7 @@ function novi_sl_shortcode( $atts ) {
 
 	ob_start();
 	?>
-	<div class="novi-sl" id="<?php echo esc_attr( $id ); ?>" data-results="<?php echo (int) $results; ?>"<?php echo $vars ? ' style="' . esc_attr( implode( ';', $vars ) ) . '"' : ''; ?>>
+	<div class="novi-sl novi-sl--<?php echo esc_attr( $theme ); ?>" id="<?php echo esc_attr( $id ); ?>" data-results="<?php echo (int) $results; ?>"<?php echo $vars ? ' style="' . esc_attr( implode( ';', $vars ) ) . '"' : ''; ?>>
 		<div class="novi-sl__search" role="search">
 			<label class="novi-sl__label" for="<?php echo esc_attr( $id ); ?>-input">Trouver un point de vente</label>
 			<div class="novi-sl__bar">

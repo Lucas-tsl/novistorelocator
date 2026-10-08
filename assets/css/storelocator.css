@@ -12,9 +12,17 @@
 	--novi-sl-muted: #555;
 	--novi-sl-border: #cbcbcb;
 	--novi-sl-focus: #1a73e8;
+	--novi-sl-bg: transparent;
+	--novi-sl-surface: #fff;
+	--novi-sl-hover: #f0f0f5;
+	--novi-sl-line: #e5e5e5;
+	--novi-sl-error: #b32d2e;
+	--novi-sl-shadow: 0 5px 7px 1px rgba(0, 0, 0, 0.2);
+	--novi-sl-shadow-hover: 0 6px 12px 2px rgba(0, 0, 0, 0.22);
 
 	font-family: 'Poppins', sans-serif;
 	color: var(--novi-sl-text);
+	background: var(--novi-sl-bg);
 	max-width: 1100px;
 	margin: 0 auto 100px;
 	box-sizing: border-box;
@@ -70,7 +78,7 @@
 	padding: 10px 14px;
 	border: 1px solid var(--novi-sl-border);
 	border-radius: 6px;
-	background: #fff;
+	background: var(--novi-sl-surface);
 	color: var(--novi-sl-text);
 	margin: 0;
 }
@@ -107,7 +115,7 @@
 	margin: 0;
 	padding: 0;
 	list-style: none;
-	background: rgba(255, 255, 255, 0.97);
+	background: var(--novi-sl-surface);
 	border: 1px solid var(--novi-sl-border);
 	border-radius: 6px;
 	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
@@ -119,7 +127,7 @@
 	gap: 12px;
 	padding: 8px 20px;
 	margin: 0;
-	border-bottom: 1px solid #e5e5e5;
+	border-bottom: 1px solid var(--novi-sl-line);
 	font-size: 16px;
 	cursor: pointer;
 }
@@ -130,7 +138,7 @@
 
 .novi-sl__suggestion:hover,
 .novi-sl__suggestion.is-active {
-	background: #f0f0f5;
+	background: var(--novi-sl-hover);
 }
 
 .novi-sl__suggestion.is-active .novi-sl__suggestion-main,
@@ -164,7 +172,7 @@
 }
 
 .novi-sl__status.is-error {
-	color: #b32d2e;
+	color: var(--novi-sl-error);
 }
 
 /* ---------- Carte et liste ---------- */
@@ -207,7 +215,8 @@
 	margin: 0 0 16px;
 	padding: 24px 20px;
 	border-radius: 25px;
-	box-shadow: 0 5px 7px 1px rgba(0, 0, 0, 0.2);
+	background: var(--novi-sl-surface);
+	box-shadow: var(--novi-sl-shadow);
 	text-align: center;
 	font-weight: 700;
 	cursor: pointer;
@@ -216,7 +225,7 @@
 }
 
 .novi-sl__card:hover {
-	box-shadow: 0 6px 12px 2px rgba(0, 0, 0, 0.22);
+	box-shadow: var(--novi-sl-shadow-hover);
 }
 
 .novi-sl__card.is-active {
@@ -334,9 +343,76 @@
 	box-shadow: 0 0 0 4px color-mix(in srgb, var(--novi-sl-marker) 35%, transparent);
 }
 
+/* ---------- Thème sombre (fond noir, texte blanc) ---------- */
+
+.novi-sl--dark {
+	--novi-sl-text: #fff;
+	--novi-sl-muted: #b8b8b8;
+	--novi-sl-border: #4a4a4a;
+	--novi-sl-focus: #8ab4f8;
+	--novi-sl-bg: #000;
+	--novi-sl-surface: #141414;
+	--novi-sl-hover: #262626;
+	--novi-sl-line: #2c2c2c;
+	--novi-sl-error: #ff8a80;
+	--novi-sl-shadow: 0 0 0 1px #2c2c2c;
+	--novi-sl-shadow-hover: 0 0 0 1px #5a5a5a;
+
+	padding: 24px;
+	border-radius: 12px;
+	color-scheme: dark;
+}
+
+.novi-sl--dark .novi-sl__input::placeholder {
+	color: #8c8c8c;
+}
+
+.novi-sl--dark .leaflet-popup-content-wrapper,
+.novi-sl--dark .leaflet-popup-tip {
+	background: var(--novi-sl-surface);
+	color: var(--novi-sl-text);
+	box-shadow: 0 3px 14px rgba(0, 0, 0, 0.6);
+}
+
+.novi-sl--dark .leaflet-container a.leaflet-popup-close-button {
+	color: #ccc;
+}
+
+.novi-sl--dark .leaflet-bar a {
+	background: var(--novi-sl-surface);
+	color: var(--novi-sl-text);
+	border-bottom-color: var(--novi-sl-line);
+}
+
+.novi-sl--dark .leaflet-bar a:hover,
+.novi-sl--dark .leaflet-bar a:focus {
+	background: var(--novi-sl-hover);
+}
+
+.novi-sl--dark .leaflet-bar {
+	border-color: var(--novi-sl-border);
+}
+
+.novi-sl--dark .leaflet-container .leaflet-control-attribution {
+	background: rgba(0, 0, 0, 0.75);
+	color: #ccc;
+}
+
+.novi-sl--dark .leaflet-container .leaflet-control-attribution a {
+	color: #e0e0e0;
+}
+
+.novi-sl--dark .novi-sl-cluster {
+	border-color: rgba(0, 0, 0, 0.85);
+}
+
 /* ---------- Mobile ---------- */
 
 @media screen and (max-width: 899px) {
+	.novi-sl--dark {
+		padding: 16px;
+	}
+
 	.novi-sl__body {
 		flex-direction: column;
 	}

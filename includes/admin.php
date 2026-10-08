@@ -554,6 +554,16 @@ function novi_sl_render_settings_page() {
 					</td>
 				</tr>
 				<tr>
+					<th scope="row"><label for="novi-sl-theme">Thème</label></th>
+					<td>
+						<select id="novi-sl-theme" name="<?php echo esc_attr( $name ); ?>[theme]">
+							<option value="dark" <?php selected( $s['theme'], 'dark' ); ?>>Sombre (fond noir, texte blanc)</option>
+							<option value="light" <?php selected( $s['theme'], 'light' ); ?>>Clair (fond blanc, texte noir)</option>
+						</select>
+						<p class="description">Modifiable page par page : <code>[store_locator theme="light"]</code>.</p>
+					</td>
+				</tr>
+				<tr>
 					<th scope="row"><label for="novi-sl-markercolor">Couleur des marqueurs</label></th>
 					<td><input type="text" id="novi-sl-markercolor" class="novi-sl-color" name="<?php echo esc_attr( $name ); ?>[markercolor]" value="<?php echo esc_attr( $s['markercolor'] ); ?>" data-default-color="#2a81cb"></td>
 				</tr>

@@ -29,6 +29,7 @@ Points à vérifier juste après la mise à jour :
 |---|---|
 | `[store_locator]` | Recherche, carte et liste des magasins les plus proches |
 | `[store_locator results="6"]` | Idem avec 6 résultats au lieu du réglage par défaut |
+| `[store_locator theme="light"]` | Thème clair sur cette page (le thème sombre est le réglage par défaut) |
 | `[store_locator_list]` | Liste HTML complète des magasins, par pays puis par ville (référencement) |
 
 ### Mettre à jour les magasins

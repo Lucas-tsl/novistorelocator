@@ -81,6 +81,9 @@ novi_sl_assert( 'abcscript' === $clean['apikey'], 'clé API nettoyée' );
 novi_sl_assert( '' === $clean['btncolor'], 'couleur invalide rejetée' );
 novi_sl_assert( '#FF0000' === $clean['btncolorbg'], 'couleur hexadécimale conservée' );
 novi_sl_assert( 20 === $clean['results_count'], 'nombre de résultats borné à 20' );
+novi_sl_assert( 'dark' === $clean['theme'], 'thème sombre par défaut' );
+novi_sl_assert( 'light' === novi_sl_sanitize_settings( array( 'theme' => 'light' ) )['theme'], 'thème clair accepté' );
+novi_sl_assert( 'dark' === novi_sl_sanitize_settings( array( 'theme' => '"><script>' ) )['theme'], 'thème inconnu rejeté' );
 
 echo "Import CSV\n";
 $r = novi_sl_import_csv(

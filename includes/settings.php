@@ -22,6 +22,7 @@ function novi_sl_default_settings() {
 		'sheet_url'     => '',
 		'sync_auto'     => 0,
 		'jsonld'        => 1,
+		'theme'         => 'dark',
 	);
 }
 
@@ -76,6 +77,7 @@ function novi_sl_sanitize_settings( $input ) {
 
 	$clean['sync_auto'] = ! empty( $input['sync_auto'] ) && '' !== $clean['sheet_url'] ? 1 : 0;
 	$clean['jsonld']    = ! empty( $input['jsonld'] ) ? 1 : 0;
+	$clean['theme']     = isset( $input['theme'] ) && in_array( $input['theme'], array( 'dark', 'light' ), true ) ? $input['theme'] : $defaults['theme'];
 
 	return $clean;
 }
