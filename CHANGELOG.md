@@ -36,7 +36,7 @@
 - Filtres par enseigne (détectée depuis le nom du magasin ou une colonne `enseigne`) et par service (colonne `services`, icône « signature »), avec le nombre de points de vente.
 - Mobile : bascule Carte / Liste, barre de recherche qui reste visible en haut, déplacement de la carte à deux doigts (un doigt fait défiler la page).
 - Ordinateur : zoom de la carte à la molette seulement avec Ctrl (⌘ sur Mac), pour ne plus bloquer le défilement de la page.
-- Thème sombre (fond noir, texte blanc) par défaut, thème clair au choix dans les paramètres ou par page (`[store_locator theme="light"]`).
+- Thème clair (fond blanc, texte noir, police du site) par défaut pour s'intégrer à la page, thème sombre au choix dans les paramètres ou par page (`[store_locator theme="dark"]`).
 - Bouton « Autour de moi » : la position n'est plus demandée dès l'ouverture de la page (elle est utilisée automatiquement seulement si le visiteur l'a déjà autorisée).
 - Distance affichée sur chaque fiche, téléphone cliquable, lien vers le site web.
 - Recherche par nom de magasin et par ville des magasins hors de France (Belgique, Luxembourg, Suisse…), codes postaux saisis sans le zéro initial.

@@ -22,7 +22,7 @@ function novi_sl_default_settings() {
 		'sheet_url'     => '',
 		'sync_auto'     => 0,
 		'jsonld'        => 1,
-		'theme'         => 'dark',
+		'theme'         => 'light',
 		'filters'       => 1,
 		'brands'        => "Beauty Success\nGaleries Lafayette\nSo Cut\nBHV",
 	);
@@ -119,6 +119,23 @@ function novi_sl_normalize_sheet_url( $url ) {
 
 	return $url;
 }
+
+/**
+ * Une seule fois : le thème clair devient le thème par défaut (intégration à la page « Où nous trouver »).
+ * Un choix fait ensuite dans les paramètres est conservé.
+ */
+function novi_sl_default_light_theme() {
+	if ( get_option( 'novi_sl_light_default' ) ) {
+		return;
+	}
+	$saved = get_option( NOVI_SL_OPTION );
+	if ( is_array( $saved ) && isset( $saved['theme'] ) && 'dark' === $saved['theme'] ) {
+		$saved['theme'] = 'light';
+		update_option( NOVI_SL_OPTION, $saved );
+	}
+	update_option( 'novi_sl_light_default', 1, false );
+}
+add_action( 'plugins_loaded', 'novi_sl_default_light_theme', 30 );
 
 /**
  * Reprogramme la synchronisation quand les réglages changent.

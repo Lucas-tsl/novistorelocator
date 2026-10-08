@@ -552,10 +552,10 @@ function novi_sl_render_settings_page() {
 					<th scope="row"><label for="novi-sl-theme">Thème</label></th>
 					<td>
 						<select id="novi-sl-theme" name="<?php echo esc_attr( $name ); ?>[theme]">
-							<option value="dark" <?php selected( $s['theme'], 'dark' ); ?>>Sombre (fond noir, texte blanc)</option>
-							<option value="light" <?php selected( $s['theme'], 'light' ); ?>>Clair (fond blanc, texte noir)</option>
+							<option value="light" <?php selected( $s['theme'], 'light' ); ?>>Clair : fond blanc, texte noir (recommandé)</option>
+							<option value="dark" <?php selected( $s['theme'], 'dark' ); ?>>Sombre : fond noir, texte blanc</option>
 						</select>
-						<p class="description">Le store locator n'utilise que du noir, du blanc et des gris : boutons, marqueurs et fond de carte suivent le thème. Modifiable page par page : <code>[store_locator theme="light"]</code>.</p>
+						<p class="description">Le store locator n'utilise que du noir, du blanc et des gris : boutons, marqueurs et fond de carte suivent le thème. Le thème clair reprend la police de votre site et se fond dans la page. Modifiable page par page : <code>[store_locator theme="dark"]</code>.</p>
 					</td>
 				</tr>
 				<tr>
