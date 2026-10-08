@@ -35,6 +35,28 @@
 	-webkit-font-smoothing: antialiased;
 }
 
+/* ---------- Largeur dans la page ----------
+ * Les thèmes « blocs » limitent le contenu à la largeur du texte (.is-layout-constrained,
+ * --wp--style--global--content-size). Le store locator utilise la largeur « large » du thème
+ * (alignwide), ou toute la largeur avec [store_locator largeur="pleine"].
+ */
+
+.novi-sl.alignwide,
+.is-layout-constrained > .novi-sl.alignwide {
+	width: 100%;
+	max-width: var(--wp--style--global--wide-size, 1200px);
+	margin-left: auto !important;
+	margin-right: auto !important;
+}
+
+.novi-sl.alignfull,
+.is-layout-constrained > .novi-sl.alignfull {
+	width: auto;
+	max-width: none;
+	padding-left: var(--wp--style--root--padding-left, 24px);
+	padding-right: var(--wp--style--root--padding-right, 24px);
+}
+
 /* ---------- Thème sombre ---------- */
 
 .novi-sl--dark {

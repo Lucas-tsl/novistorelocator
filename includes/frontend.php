@@ -126,11 +126,19 @@ function novi_sl_shortcode( $atts ) {
 		array(
 			'results' => $s['results_count'],
 			'theme'   => $s['theme'],
+			'largeur' => 'large',
 		),
 		$atts,
 		'store_locator'
 	);
 	$theme = 'light' === $atts['theme'] ? 'light' : 'dark';
+	// Largeur : « large » (alignwide, largeur large du thème), « pleine » (alignfull) ou « contenu » (largeur du texte).
+	$widths = array(
+		'large'   => ' alignwide',
+		'pleine'  => ' alignfull',
+		'contenu' => '',
+	);
+	$align  = isset( $widths[ $atts['largeur'] ] ) ? $widths[ $atts['largeur'] ] : $widths['large'];
 
 	novi_sl_enqueue_assets();
 	novi_sl_remember_page();
@@ -141,7 +149,7 @@ function novi_sl_shortcode( $atts ) {
 
 	ob_start();
 	?>
-	<div class="novi-sl novi-sl--<?php echo esc_attr( $theme ); ?>" id="<?php echo esc_attr( $id ); ?>" data-results="<?php echo (int) $results; ?>" data-page-url="<?php echo esc_url( get_permalink() ); ?>"<?php echo $current ? ' data-open-store="' . esc_attr( $current['slug'] ) . '"' : ''; ?>>
+	<div class="novi-sl novi-sl--<?php echo esc_attr( $theme . $align ); ?>" id="<?php echo esc_attr( $id ); ?>" data-results="<?php echo (int) $results; ?>" data-page-url="<?php echo esc_url( get_permalink() ); ?>"<?php echo $current ? ' data-open-store="' . esc_attr( $current['slug'] ) . '"' : ''; ?>>
 		<div class="novi-sl__search" role="search">
 			<label class="novi-sl__label" for="<?php echo esc_attr( $id ); ?>-input">Trouver un point de vente</label>
 			<div class="novi-sl__bar">

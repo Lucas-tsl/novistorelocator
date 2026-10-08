@@ -27,6 +27,7 @@
 - Liste latérale défilant verticalement ; plus de saut de mise en page au survol des suggestions.
 
 ### Expérience utilisateur
+- Largeur « large » du thème par défaut (alignwide) au lieu de la largeur du texte imposée par les thèmes blocs ; option `[store_locator largeur="pleine"]` ou `largeur="contenu"`.
 - « Rechercher dans cette zone » quand le visiteur déplace ou zoome la carte, et « Voir plus de points de vente » sous la liste.
 - Le navigateur mémorise la dernière recherche (réaffichée au retour sur la page, pendant 30 jours) et l'application d'itinéraire choisie (proposée en premier).
 - Plus de message « Recherche en cours… » pendant la saisie.
