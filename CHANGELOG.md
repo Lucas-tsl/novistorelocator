@@ -35,7 +35,7 @@
 - Grande carte plein cadre avec la liste des magasins superposée à gauche (repliable). Survol lié : survoler une fiche met son marqueur en avant, survoler un marqueur met sa fiche en avant.
 - Fiches hiérarchisées : enseigne en petites capitales, nom du magasin en titre, adresse, état « Ouvert / Fermé », téléphone, alignées à gauche.
 - Micro-animations : apparition des fiches en cascade, marqueur qui grossit au survol et rebondit à la sélection, ouverture des menus et de la fiche ; toutes désactivées si le visiteur a demandé moins d'animations.
-- Fiche magasin en fenêtre avec sa propre URL (`?magasin=…`) : adresse, téléphone, horaires de la semaine, services, itinéraire.
+- Fiche magasin en fenêtre avec sa propre URL (`?magasin=…`) : adresse, téléphone, horaires de la semaine, services, itinéraire ; la carte se place sur le magasin derrière la fiche (pas de bouton « Voir sur la carte » redondant).
 - « J'Y VAIS » propose le choix de l'application d'itinéraire : Google Maps, Apple Plans ou Waze.
 - Filtres par enseigne (détectée depuis le nom du magasin ou une colonne `enseigne`) et par service (colonne `services`, icône « signature »), avec le nombre de points de vente.
 - Mobile : bascule Carte / Liste, barre de recherche qui reste visible en haut, déplacement de la carte à deux doigts (un doigt fait défiler la page).

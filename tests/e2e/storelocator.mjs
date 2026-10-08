@@ -201,9 +201,10 @@ const input = `${root} .novi-sl__input`;
 	check(/Le Bouscat/.test(sheet) && /Lundi/.test(sheet) && /05 56 08 09 10/.test(sheet), 'lien direct : fiche ouverte avec adresse, horaires et téléphone');
 	check(/^(Ouvert|Fermé)/m.test(await page.locator('.novi-sl__modal .novi-sl__open-state').innerText()), 'état « Ouvert / Fermé » calculé à l\'heure de Paris');
 	await page.screenshot({ path: `${out}/4-fiche-magasin.png` });
-	await page.locator('.novi-sl__modal .novi-sl__show-map').click();
+	check(await page.locator('.novi-sl__modal .novi-sl__show-map').count() === 0, 'pas de bouton « Voir sur la carte » redondant dans la fiche');
+	await page.locator('.novi-sl__modal .novi-sl__modal-close').click();
 	await page.waitForTimeout(1500);
-	check(!(await page.evaluate(() => document.querySelector('.novi-sl__modal').open)) && await page.locator('.leaflet-popup').count() === 1, '« Voir sur la carte » ferme la fiche et montre le magasin');
+	check(!(await page.evaluate(() => document.querySelector('.novi-sl__modal').open)) && /Le Bouscat/.test(await page.locator('.leaflet-popup').innerText()), 'lien direct : à la fermeture, le magasin est montré sur la carte');
 	check(errors.length === 0, `aucune erreur JavaScript (fiche)${errors.length ? ' : ' + errors.join(' | ') : ''}`);
 	await context.close();
 }

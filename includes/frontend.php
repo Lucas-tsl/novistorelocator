@@ -282,7 +282,7 @@ function novi_sl_render_store_details( array $store, $id ) {
 		$html .= '<div class="novi-sl__fact"><dt>Site web</dt><dd><a href="' . esc_url( $store['website'] ) . '" target="_blank" rel="noopener">' . esc_html( preg_replace( '#^https?://(www\.)?#', '', untrailingslashit( $store['website'] ) ) ) . '</a></dd></div>';
 	}
 
-	$html .= '</dl><div class="novi-sl__sheet-actions">' . novi_sl_render_directions( $store ) . '<button type="button" class="novi-sl__btn novi-sl__btn--ghost novi-sl__show-map">Voir sur la carte</button></div>';
+	$html .= '</dl><div class="novi-sl__sheet-actions">' . novi_sl_render_directions( $store ) . '</div>';
 	return $html . '</article>';
 }
 

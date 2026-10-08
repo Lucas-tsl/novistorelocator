@@ -1398,15 +1398,6 @@
 				self.afterClose(false);
 			}
 		});
-		modal.addEventListener('click', function (event) {
-			if (event.target.closest('.novi-sl__show-map')) {
-				var slug = modal.querySelector('.novi-sl__sheet').getAttribute('data-slug');
-				self.closeStore();
-				if (self.bySlug[slug]) {
-					self.focusStore(self.bySlug[slug]);
-				}
-			}
-		});
 		window.addEventListener('popstate', function () {
 			self.openFromUrl(false);
 		});
@@ -1508,9 +1499,6 @@
 
 		var actions = el('div', 'novi-sl__sheet-actions');
 		actions.appendChild(directionsMenu(store, this.userPosition));
-		var mapBtn = el('button', 'novi-sl__btn novi-sl__btn--ghost novi-sl__show-map', 'Voir sur la carte');
-		mapBtn.type = 'button';
-		actions.appendChild(mapBtn);
 		sheet.appendChild(actions);
 
 		this.modalBody.textContent = '';
@@ -1572,6 +1560,12 @@
 		if (this.lastFocus && typeof this.lastFocus.focus === 'function' && document.body.contains(this.lastFocus)) {
 			this.lastFocus.focus();
 		}
+		// Arrivée par un lien direct (Google, lien partagé) : on montre ensuite le magasin sur la carte.
+		if (this.revealOnClose) {
+			var store = this.revealOnClose;
+			this.revealOnClose = null;
+			this.focusStore(store);
+		}
 	};
 
 	/** Ouvre ou ferme la fiche selon l'URL (chargement direct ou boutons Précédent/Suivant). */
@@ -1582,6 +1576,7 @@
 			if (!this.modal.open || initial || this.modal.querySelector('.novi-sl__sheet[data-slug]') === null ||
 				this.modal.querySelector('.novi-sl__sheet').getAttribute('data-slug') !== slug || !this.root.classList.contains('has-modal')) {
 				this.openStore(store, { push: false });
+				this.revealOnClose = initial ? store : null;
 			}
 		} else if (this.modal && this.modal.open) {
 			this.historyPushed = false;
