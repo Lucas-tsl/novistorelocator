@@ -85,7 +85,8 @@ const input = `${root} .novi-sl__input`;
 
 	// Molette sans Ctrl : la carte ne zoome pas (la page défile).
 	const zoomBefore = await page.evaluate(() => document.querySelector('.novi-sl__map .leaflet-proxy').style.transform);
-	await page.mouse.move(500, 600);
+	const mapBox = await page.locator(`${root} .novi-sl__map`).boundingBox();
+	await page.mouse.move(mapBox.x + mapBox.width - 120, mapBox.y + mapBox.height / 2);
 	await page.mouse.wheel(0, -400);
 	await page.waitForTimeout(600);
 	const zoomAfter = await page.evaluate(() => document.querySelector('.novi-sl__map .leaflet-proxy').style.transform);
@@ -127,8 +128,81 @@ const input = `${root} .novi-sl__input`;
 	await page.waitForSelector(`${root} .novi-sl__suggestion--message`);
 	check(/Aucun résultat/.test(await page.locator(`${root} .novi-sl__suggestions`).innerText()), 'message « aucun résultat »');
 
+	// Survol lié : fiche → marqueur.
+	await page.fill(input, 'bordeaux');
+	await page.locator(`${root} .novi-sl__suggestion--place`, { hasText: '33000' }).first().click();
+	await page.waitForSelector(`${root} .novi-sl__card`);
+	await page.waitForTimeout(900);
+	await page.locator(`${root} .novi-sl__card`).first().hover();
+	check(await page.locator(`${root} .novi-sl-pin.is-hot, ${root} .novi-sl-cluster.is-hot`).count() === 1, 'survol d\'une fiche : son marqueur est mis en avant sur la carte');
+	await page.locator(`${root} .novi-sl__label`).hover();
+	check(await page.locator(`${root} .novi-sl-pin.is-hot, ${root} .novi-sl-cluster.is-hot`).count() === 0, 'fin du survol : marqueur rétabli');
+
+	// Fiche magasin en fenêtre, avec URL propre.
+	const baseUrl = page.url();
+	await page.locator(`${root} .novi-sl__card .novi-sl__more`).first().click();
+	await page.waitForSelector(`${root} .novi-sl__modal[open] .novi-sl__modal-title`);
+	check(await page.evaluate(() => document.querySelector('.novi-sl__modal').matches(':modal')), '« Voir la fiche » ouvre la fiche en fenêtre (sans changer de page)');
+	check(/[?&]magasin=[a-z0-9-]+/.test(page.url()), `URL propre au magasin : ${page.url().replace(/^.*\?/, '?')}`);
+	check(/adresse, horaires et téléphone/.test(await page.title()), 'titre de l\'onglet propre au magasin');
+	await page.keyboard.press('Escape');
+	await page.waitForTimeout(300);
+	check(!(await page.evaluate(() => document.querySelector('.novi-sl__modal').open)) && page.url() === baseUrl, 'Échap ferme la fiche et restaure l\'URL');
+	await page.locator(`${root} .novi-sl__card .novi-sl__more`).nth(1).click();
+	await page.waitForSelector(`${root} .novi-sl__modal[open]`);
+	await page.goBack();
+	await page.waitForTimeout(300);
+	check(!(await page.evaluate(() => document.querySelector('.novi-sl__modal').open)), 'bouton Précédent : la fiche se ferme');
+	await page.goForward();
+	await page.waitForTimeout(300);
+	check(await page.evaluate(() => document.querySelector('.novi-sl__modal').open), 'bouton Suivant : la fiche se rouvre');
+	await page.keyboard.press('Escape');
+
+	// Liste repliable.
+	await page.locator(`${root} .novi-sl__panel-toggle`).click();
+	const collapsed = await page.locator(`${root} .novi-sl__panel`).waitFor({ state: 'hidden', timeout: 3000 }).then(() => true, () => false);
+	check(collapsed && await page.locator(`${root} .novi-sl__panel-open`).isVisible(), 'liste repliable pour voir toute la carte');
+	await page.locator(`${root} .novi-sl__panel-open`).click();
+	const expanded = await page.locator(`${root} .novi-sl__panel`).waitFor({ state: 'visible', timeout: 3000 }).then(() => true, () => false);
+	check(expanded, 'liste réaffichée');
+
+	// Noir et blanc uniquement : aucune couleur saturée dans l'interface (hors fond de carte).
+	const colored = await page.evaluate(() => {
+		const bad = [];
+		const sat = (c) => {
+			const m = c.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/);
+			return m && Math.max(m[1], m[2], m[3]) - Math.min(m[1], m[2], m[3]) > 12;
+		};
+		document.querySelectorAll('.novi-sl *').forEach((e) => {
+			if (e.closest('.leaflet-tile-pane')) return;
+			const cs = getComputedStyle(e);
+			['color', 'backgroundColor', 'borderTopColor', 'fill', 'stroke'].forEach((p) => {
+				if (cs[p] && sat(cs[p])) bad.push((e.className.baseVal ?? e.className) + ' ' + p + ' ' + cs[p]);
+			});
+		});
+		return [...new Set(bad)].slice(0, 5);
+	});
+	check(colored.length === 0, `interface uniquement en noir, blanc et gris${colored.length ? ' : ' + colored.join(' | ') : ''}`);
+
 	check((requests['communes.min.json'] || 0) === 1, `fichier des communes téléchargé une seule fois (${requests['communes.min.json'] || 0})`);
 	check(errors.length === 0, `aucune erreur JavaScript${errors.length ? ' : ' + errors.join(' | ') : ''}`);
+	await context.close();
+}
+
+/* ---------------- Fiche ouverte depuis son URL ---------------- */
+{
+	const sep = url.includes('?') ? '&' : '?';
+	const { page, errors, context } = await newPage({ width: 1280, height: 900 });
+	await page.goto(url + sep + 'magasin=beauty-success-le-bouscat', { waitUntil: 'networkidle' });
+	await page.waitForFunction(() => document.querySelector('.novi-sl__modal').matches(':modal'));
+	const sheet = await page.locator('.novi-sl__modal').innerText();
+	check(/Le Bouscat/.test(sheet) && /Lundi/.test(sheet) && /05 56 08 09 10/.test(sheet), 'lien direct : fiche ouverte avec adresse, horaires et téléphone');
+	check(/^(Ouvert|Fermé)/m.test(await page.locator('.novi-sl__modal .novi-sl__open-state').innerText()), 'état « Ouvert / Fermé » calculé à l\'heure de Paris');
+	await page.screenshot({ path: `${out}/4-fiche-magasin.png` });
+	await page.locator('.novi-sl__modal .novi-sl__show-map').click();
+	await page.waitForTimeout(1500);
+	check(!(await page.evaluate(() => document.querySelector('.novi-sl__modal').open)) && await page.locator('.leaflet-popup').count() === 1, '« Voir sur la carte » ferme la fiche et montre le magasin');
+	check(errors.length === 0, `aucune erreur JavaScript (fiche)${errors.length ? ' : ' + errors.join(' | ') : ''}`);
 	await context.close();
 }
 
@@ -145,8 +219,8 @@ const input = `${root} .novi-sl__input`;
 	await page.waitForSelector(`${root} .novi-sl__card`);
 	await brandChip.click();
 	await page.waitForTimeout(400);
-	const names = await page.locator(`${root} .novi-sl__card-title`).allInnerTexts();
-	check(names.length > 0 && names.every((n) => n.toUpperCase().startsWith(brand.toUpperCase())), `filtre « ${brand} » : seules ses fiches restent (${names.length})`);
+	const names = await page.locator(`${root} .novi-sl__card .novi-sl__eyebrow`).allInnerTexts();
+	check(names.length > 0 && names.every((n) => n.trim().toUpperCase() === brand.toUpperCase()), `filtre « ${brand} » : seules ses fiches restent (${names.length})`);
 	check(await brandChip.getAttribute('aria-pressed') === 'true', 'filtre actif signalé (aria-pressed)');
 	await page.locator(`${root} .novi-sl__chip--all`).click();
 	await page.waitForTimeout(300);

@@ -29,7 +29,7 @@ Points à vérifier juste après la mise à jour :
 |---|---|
 | `[store_locator]` | Recherche, carte et liste des magasins les plus proches |
 | `[store_locator results="6"]` | Idem avec 6 résultats au lieu du réglage par défaut |
-| `[store_locator theme="light"]` | Thème clair sur cette page (le thème sombre est le réglage par défaut) |
+| `[store_locator theme="light"]` | Thème clair sur cette page (le thème sombre est le réglage par défaut). Les deux thèmes n'utilisent que du noir, du blanc et des gris |
 | `[store_locator_list]` | Liste HTML complète des magasins, par pays puis par ville (référencement) |
 
 ### Mettre à jour les magasins
@@ -42,11 +42,32 @@ Points à vérifier juste après la mise à jour :
 - **Sauvegardes** : les 10 dernières listes remplacées sont restaurables en un clic.
 - **Télécharger la liste en CSV** : export réimportable de la liste en ligne.
 
+### Fiches magasin (référencement local)
+
+Chaque magasin a sa propre adresse : `https://votre-site/page-du-store-locator/?magasin=beauty-success-le-bouscat`.
+
+- Sur le site, « Voir la fiche » ouvre une fenêtre par-dessus la carte (sans changer de page) et met à jour l'adresse. Les boutons Précédent et Suivant fonctionnent, et le lien est partageable.
+- Ouverte directement (par Google, un lien partagé…), la page affiche la fiche rendue par le serveur avec un titre, une description, une URL canonique et des données structurées `schema.org/Store` propres au magasin (horaires `openingHoursSpecification`, téléphone, enseigne, coordonnées).
+- Les fiches sont ajoutées au plan du site : `wp-sitemap.xml` (WordPress) ou le plan des pages de Yoast SEO. Avec Yoast SEO ou Rank Math, le titre, la description et l'URL canonique leur sont transmis.
+- Un identifiant inconnu (magasin retiré) redirige de façon permanente (301) vers la page du store locator.
+
+### Horaires
+
+Colonne `horaires`, en texte libre, une ligne ou un segment par groupe de jours (séparateurs `;`, `|` ou retour à la ligne) :
+
+```
+Lundi-Samedi 9h30-19h30 ; Dimanche fermé
+Lun au ven 9h-12h 14h-19h | Sam 9h-18h
+Tous les jours 10h-20h
+```
+
+Ces formats donnent le tableau de la semaine, l'état « Ouvert · ferme à 19h » (heure de Paris) et les horaires dans les données structurées. Un texte non reconnu (« Ouvert selon saison ») est affiché tel quel ; le rapport d'import le signale.
+
 ### Colonnes du CSV
 
 La première ligne doit contenir les noms de colonnes. Obligatoires : `name`, `latitude`, `longitude`. Reconnues : `id_store`, `active` (1/oui), `address1`, `address2`, `postcode`, `city`, `country`, `phone`, `website`, `icone` (`signature` = marqueur cuivré et mention « Soins en institut », `rouge` = marqueur rouge). `enseigne` (sinon déduite du nom grâce à la liste des enseignes des paramètres), `services` (séparés par des virgules, ex. « Soins visage, Épilation »). Les autres colonnes sont ignorées.
 
-Les filtres affichés au-dessus de la carte sont construits à partir des enseignes et des services.
+Les filtres affichés au-dessus de la carte sont construits à partir des enseignes et des services. Téléphone : colonne `phone` ou `telephone` (mis en forme automatiquement, ex. 05 56 08 09 10). Les noms saisis en MAJUSCULES sont affichés en casse lisible (« BEAUTY SUCCESS LE BOUSCAT » → enseigne « Beauty Success », titre « Le Bouscat »).
 
 Pour un magasin français dont la latitude/longitude est vide, la position est calculée à partir de l'adresse via le service public de géocodage de l'IGN (data.geopf.fr), dans la limite de 50 par import.
 
@@ -59,7 +80,9 @@ includes/storage.php       Fichier des magasins, sauvegardes, migration 1.3 → 
 includes/import.php        Lecture et validation du CSV, géocodage
 includes/sync.php          Synchronisation Google Sheets (manuelle et quotidienne)
 includes/admin.php         Pages d'administration (actions protégées par nonce + droits)
-includes/frontend.php      Shortcodes, chargement des ressources, JSON-LD
+includes/frontend.php      Shortcodes, chargement des ressources, fiche rendue côté serveur, JSON-LD
+includes/store.php         Enseigne, casse des noms, horaires, téléphone, identifiants d'URL
+includes/seo.php           Fiches indexables : titre, description, canonique, plan du site
 assets/js/storelocator.js  Carte, recherche, géolocalisation
 assets/data/communes.min.json  Communes françaises (1,7 Mo, 0,6 Mo compressé)
 assets/vendor/             Leaflet 1.9.4 et Leaflet.markercluster 1.5.3 (hébergés localement)

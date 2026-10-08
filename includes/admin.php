@@ -67,11 +67,6 @@ function novi_sl_admin_assets( $hook ) {
 		return;
 	}
 	wp_enqueue_style( 'novi-sl-admin', NOVI_SL_URL . 'assets/css/admin.css', array(), NOVI_SL_VERSION );
-	if ( false !== strpos( (string) $hook, NOVI_SL_SETTINGS_PAGE ) ) {
-		wp_enqueue_style( 'wp-color-picker' );
-		wp_enqueue_script( 'wp-color-picker' );
-		wp_add_inline_script( 'wp-color-picker', 'jQuery(function($){$(".novi-sl-color").wpColorPicker();});' );
-	}
 }
 
 /* -------------------------------------------------------------------------
@@ -399,7 +394,7 @@ function novi_sl_render_stores_page() {
 					<li>Choisissez ce fichier ci-dessous puis cliquez sur « Analyser le fichier ».</li>
 					<li>Vérifiez le rapport, puis validez la mise en ligne.</li>
 				</ol>
-				<p class="description">Colonnes reconnues : id_store, active, name, address1, address2, postcode, city, country, phone, website, latitude, longitude, icone (valeurs « signature » ou « rouge »), enseigne, services (séparés par des virgules). Si la latitude/longitude d'un magasin français est vide, elle est calculée à partir de l'adresse.</p>
+				<p class="description">Colonnes reconnues : id_store, active, name, address1, address2, postcode, city, country, phone, website, latitude, longitude, icone (valeurs « signature » ou « rouge »), enseigne, services (séparés par des virgules), horaires (ex. « Lundi-Samedi 10h-19h ; Dimanche fermé »). Si la latitude/longitude d'un magasin français est vide, elle est calculée à partir de l'adresse.</p>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
 					<input type="hidden" name="action" value="novi_sl_upload">
 					<?php wp_nonce_field( 'novi_sl_upload' ); ?>
@@ -560,12 +555,8 @@ function novi_sl_render_settings_page() {
 							<option value="dark" <?php selected( $s['theme'], 'dark' ); ?>>Sombre (fond noir, texte blanc)</option>
 							<option value="light" <?php selected( $s['theme'], 'light' ); ?>>Clair (fond blanc, texte noir)</option>
 						</select>
-						<p class="description">Modifiable page par page : <code>[store_locator theme="light"]</code>.</p>
+						<p class="description">Le store locator n'utilise que du noir, du blanc et des gris : boutons, marqueurs et fond de carte suivent le thème. Modifiable page par page : <code>[store_locator theme="light"]</code>.</p>
 					</td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="novi-sl-markercolor">Couleur des marqueurs</label></th>
-					<td><input type="text" id="novi-sl-markercolor" class="novi-sl-color" name="<?php echo esc_attr( $name ); ?>[markercolor]" value="<?php echo esc_attr( $s['markercolor'] ); ?>" data-default-color="#2a81cb"></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="novi-sl-results">Magasins affichés après une recherche</label></th>
@@ -585,18 +576,6 @@ function novi_sl_render_settings_page() {
 						<textarea id="novi-sl-brands" class="large-text" rows="5" name="<?php echo esc_attr( $name ); ?>[brands]"><?php echo esc_textarea( $s['brands'] ); ?></textarea>
 						<p class="description">Une enseigne par ligne. Un magasin dont le nom commence par une enseigne lui est rattaché (ex. « BEAUTY SUCCESS PESSAC » → Beauty Success). Les autres sont regroupés dans « Autres ». Une colonne <code>enseigne</code> dans le fichier est prioritaire. Les services viennent de la colonne <code>services</code> (séparés par des virgules) et de l'icône « signature » (Soins en institut).</p>
 					</td>
-				</tr>
-			</table>
-
-			<h2 class="title">Boutons « J'y vais »</h2>
-			<table class="form-table" role="presentation">
-				<tr>
-					<th scope="row"><label for="novi-sl-btncolor">Couleur du texte</label></th>
-					<td><input type="text" id="novi-sl-btncolor" class="novi-sl-color" name="<?php echo esc_attr( $name ); ?>[btncolor]" value="<?php echo esc_attr( $s['btncolor'] ); ?>" data-default-color="#ffffff"></td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="novi-sl-btncolorbg">Couleur du fond</label></th>
-					<td><input type="text" id="novi-sl-btncolorbg" class="novi-sl-color" name="<?php echo esc_attr( $name ); ?>[btncolorbg]" value="<?php echo esc_attr( $s['btncolorbg'] ); ?>" data-default-color="#8a2be2"></td>
 				</tr>
 			</table>
 

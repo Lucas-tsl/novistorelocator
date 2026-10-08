@@ -57,6 +57,11 @@ function novi_sl_header_aliases() {
 		'marque'       => 'brand',
 		'services'     => 'services',
 		'service'      => 'services',
+		'horaires'     => 'hours',
+		'horaire'      => 'hours',
+		'hours'        => 'hours',
+		'hours_text'   => 'hours',
+		'opening hours' => 'hours',
 	);
 }
 
@@ -220,7 +225,15 @@ function novi_sl_import_rows( array $rows, $geocode = true ) {
 		foreach ( $raw as $key => $value ) {
 			$norm         = novi_sl_normalize_header( $key );
 			$field        = isset( $aliases[ $norm ] ) ? $aliases[ $norm ] : $key;
-			$row[ $field ] = is_scalar( $value ) ? trim( (string) $value ) : '';
+			if ( is_array( $value ) ) {
+				// Liste déjà enregistrée (services) ; les horaires calculés sont recalculés depuis le texte.
+				$value = 'services' === $field ? implode( ', ', array_filter( $value, 'is_scalar' ) ) : '';
+			}
+			$value = is_scalar( $value ) ? trim( (string) $value ) : '';
+			if ( '' === $value && isset( $row[ $field ] ) && '' !== $row[ $field ] ) {
+				continue; // Ne pas écraser une valeur déjà lue par un alias vide.
+			}
+			$row[ $field ] = $value;
 		}
 		$line = isset( $raw['_line'] ) ? (int) $raw['_line'] : $i + 2;
 		$name = isset( $row['name'] ) ? sanitize_text_field( $row['name'] ) : '';
@@ -251,7 +264,16 @@ function novi_sl_import_rows( array $rows, $geocode = true ) {
 			'icone'    => sanitize_key( isset( $row['icone'] ) ? $row['icone'] : '' ),
 			'brand'    => sanitize_text_field( isset( $row['brand'] ) ? $row['brand'] : '' ),
 			'services' => novi_sl_split_services( isset( $row['services'] ) ? $row['services'] : '' ),
+			'hours_text' => isset( $row['hours'] ) ? trim( sanitize_textarea_field( str_replace( '|', "\n", $row['hours'] ) ) ) : '',
+			'hours'    => null,
+			'slug'     => '',
 		);
+		if ( '' !== $store['hours_text'] ) {
+			$store['hours'] = novi_sl_parse_hours( $store['hours_text'] );
+			if ( null === $store['hours'] ) {
+				$issues[] = novi_sl_issue( $line, $name, 'Horaires affichés tels quels (format non reconnu pour le calcul « Ouvert maintenant ») : ' . $store['hours_text'], 'warning' );
+			}
+		}
 
 		$is_france = novi_sl_is_france( $store['country'] );
 
@@ -299,6 +321,8 @@ function novi_sl_import_rows( array $rows, $geocode = true ) {
 		$stores[] = $store;
 		++$stats['imported'];
 	}
+
+	novi_sl_assign_slugs( $stores );
 
 	return array(
 		'stores' => $stores,

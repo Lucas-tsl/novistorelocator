@@ -20,10 +20,12 @@ define( 'NOVI_SL_CAP', 'manage_options' );
 define( 'NOVI_SL_CRON_HOOK', 'novi_sl_daily_sync' );
 
 require_once NOVI_SL_DIR . 'includes/settings.php';
+require_once NOVI_SL_DIR . 'includes/store.php';
 require_once NOVI_SL_DIR . 'includes/storage.php';
 require_once NOVI_SL_DIR . 'includes/import.php';
 require_once NOVI_SL_DIR . 'includes/sync.php';
 require_once NOVI_SL_DIR . 'includes/frontend.php';
+require_once NOVI_SL_DIR . 'includes/seo.php';
 
 if ( is_admin() ) {
 	require_once NOVI_SL_DIR . 'includes/admin.php';

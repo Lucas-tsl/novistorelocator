@@ -52,9 +52,9 @@
 
 	function formatDistance(km) {
 		if (km < 1) {
-			return 'à ' + Math.max(10, Math.round(km * 100) * 10) + ' m';
+			return Math.max(10, Math.round(km * 100) * 10) + ' m';
 		}
-		return 'à ' + km.toLocaleString('fr-FR', { maximumFractionDigits: km < 10 ? 1 : 0 }) + ' km';
+		return km.toLocaleString('fr-FR', { maximumFractionDigits: km < 10 ? 1 : 0 }) + ' km';
 	}
 
 	function el(tag, className, text) {
@@ -135,6 +135,9 @@
 							icone: String(s.icone || ''),
 							brand: String(s.brand || ''),
 							services: Array.isArray(s.services) ? s.services.map(String).filter(Boolean) : [],
+							slug: String(s.slug || ''),
+							hours: Array.isArray(s.hours) ? s.hours : null,
+							hoursText: String(s.hours_text || ''),
 							lat: lat,
 							lng: lng,
 							n: normalize(s.name),
@@ -142,8 +145,11 @@
 						});
 					});
 					stores.forEach(function (store) {
-						store.brandLabel = detectBrand(store);
+						store.brandName = detectBrand(store);
+						store.brandLabel = store.brandName || OTHER_BRAND;
 						store.serviceList = detectServices(store);
+						store.title = titleCase(store.name);
+						store.short = shortTitle(store);
 					});
 					return stores;
 				})
@@ -249,14 +255,50 @@
 
 		return places.slice(0, MAX_PLACES).concat(storeHits.slice(0, MAX_STORE_SUGGESTIONS));
 	}
-
 	/* ------------------------------------------------------------------
-	 * Enseignes et services (filtres)
+	 * Mise en forme : enseigne, noms, téléphone, horaires
+	 * (mêmes règles que includes/store.php)
 	 * ---------------------------------------------------------------- */
 
 	var OTHER_BRAND = (CFG.labels && CFG.labels.otherBrand) || 'Autres';
+	var SIGNATURE = (CFG.labels && CFG.labels.signature) || 'Soins en institut';
+	var DAY_NAMES = CFG.dayNames || ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
-	/** Enseigne : colonne « enseigne » du fichier, sinon début du nom comparé à la liste des réglages. */
+	/** « BEAUTY SUCCESS LE BOUSCAT » → « Beauty Success Le Bouscat » (texte déjà en casse mixte : inchangé). */
+	function titleCase(text) {
+		text = String(text || '').replace(/\s+/g, ' ').trim();
+		if (!text || /\p{Ll}/u.test(text)) {
+			return text;
+		}
+		var keepUpper = ['bhv', 'cc', 'ri', 'sas', 'zac', 'zi', 'za', 'cv'];
+		var small = ['de', 'du', 'des', 'la', 'le', 'les', 'et', 'en', 'sur', 'sous', 'aux', 'au', 'a', 'lès'];
+		var parts = text.split(/([\s\-'’]+)/);
+		var prevDelim = '';
+		return parts.map(function (part, i) {
+			if (i % 2 === 1) {
+				prevDelim = part;
+				return part;
+			}
+			var lower = part.toLowerCase();
+			var next = parts[i + 1] || '';
+			if (keepUpper.indexOf(lower) !== -1) {
+				return lower.toUpperCase();
+			}
+			if (i > 0 && (lower === 'd' || lower === 'l') && /['’]/.test(next)) {
+				return lower;
+			}
+			if ((i > 0 || lower === 'l') && (lower === 'd' || lower === 'l') && next === ' ' && /^[aeiouyhàâéèêëîïôûü]/i.test(parts[i + 2] || '')) {
+				parts[i + 1] = ''; // « D ORNON » saisi sans apostrophe → d'Ornon.
+				return (i === 0 ? lower.toUpperCase() : lower) + "'";
+			}
+			if (i > 0 && prevDelim.trim() === '-' && small.indexOf(lower) !== -1) {
+				return lower;
+			}
+			return lower.charAt(0).toUpperCase() + lower.slice(1);
+		}).join('');
+	}
+
+	/** Enseigne : colonne « enseigne », sinon début du nom comparé à la liste des réglages, sinon ''. */
 	function detectBrand(store) {
 		if (store.brand) {
 			return store.brand;
@@ -265,81 +307,163 @@
 		var brands = CFG.brands || [];
 		for (var i = 0; i < brands.length; i++) {
 			var b = normalize(brands[i]);
-			if (b && (name === b || name.indexOf(b + ' ') === 0 || name.indexOf(b) === 0)) {
+			if (b && name.indexOf(b) === 0) {
 				return brands[i];
 			}
 		}
-		return OTHER_BRAND;
+		return '';
 	}
 
-	/** Services : colonne « services » du fichier, plus « Soins en institut » pour l'icône signature. */
+	/** Services : colonne « services » + « Soins en institut » pour l'icône signature. */
 	function detectServices(store) {
 		var list = store.services.slice();
-		if (store.icone === 'signature' && CFG.labels && CFG.labels.signature && list.indexOf(CFG.labels.signature) === -1) {
-			list.push(CFG.labels.signature);
+		if (store.icone === 'signature' && list.indexOf(SIGNATURE) === -1) {
+			list.push(SIGNATURE);
 		}
 		return list;
+	}
+
+	/** Nom sans l'enseigne (« Le Bouscat ») quand l'enseigne est affichée à part. */
+	function shortTitle(store) {
+		var full = titleCase(store.name);
+		if (store.brandName) {
+			var b = normalize(store.brandName);
+			if (normalize(full).indexOf(b) === 0) {
+				var rest = full.slice(store.brandName.length).trim();
+				if (rest.length > 1) {
+					return rest;
+				}
+			}
+		}
+		return full;
+	}
+
+	function formatPhone(phone) {
+		var digits = String(phone || '').replace(/\D/g, '');
+		if (digits.length === 10 && digits.charAt(0) === '0') {
+			return digits.replace(/(\d{2})(?=\d)/g, '$1 ');
+		}
+		return String(phone || '').trim();
+	}
+
+	function addressLine(store) {
+		return [store.address1, store.address2, (store.postcode + ' ' + titleCase(store.city)).trim(), isFrance(store.country) ? '' : store.country]
+			.filter(Boolean)
+			.join(', ');
+	}
+
+	function formatTime(hhmm) {
+		var p = String(hhmm).split(':');
+		return parseInt(p[0], 10) + 'h' + (p[1] && p[1] !== '00' ? p[1] : '');
+	}
+
+	/** Jour (0 = lundi) et minutes écoulées, à l'heure de Paris. */
+	function parisNow() {
+		try {
+			var parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Paris', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+			var get = function (type) {
+				var found = parts.filter(function (p) {
+					return p.type === type;
+				})[0];
+				return found ? found.value : '';
+			};
+			var day = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(get('weekday'));
+			return { day: day, minutes: parseInt(get('hour'), 10) * 60 + parseInt(get('minute'), 10) };
+		} catch (e) {
+			var d = new Date();
+			return { day: (d.getDay() + 6) % 7, minutes: d.getHours() * 60 + d.getMinutes() };
+		}
+	}
+
+	function toMinutes(hhmm) {
+		var p = String(hhmm).split(':');
+		return parseInt(p[0], 10) * 60 + parseInt(p[1] || '0', 10);
+	}
+
+	/** « Ouvert · ferme à 19h » / « Fermé · ouvre demain à 10h », ou null sans horaires lisibles. */
+	function openState(hours) {
+		if (!Array.isArray(hours) || hours.length !== 7) {
+			return null;
+		}
+		var now = parisNow();
+		var today = hours[now.day] || [];
+		for (var i = 0; i < today.length; i++) {
+			if (now.minutes >= toMinutes(today[i][0]) && now.minutes < toMinutes(today[i][1])) {
+				return { open: true, text: 'Ouvert · ferme à ' + formatTime(today[i][1]) };
+			}
+		}
+		for (var j = 0; j < today.length; j++) {
+			if (toMinutes(today[j][0]) > now.minutes) {
+				return { open: false, text: 'Fermé · ouvre à ' + formatTime(today[j][0]) };
+			}
+		}
+		for (var k = 1; k <= 7; k++) {
+			var slots = hours[(now.day + k) % 7] || [];
+			if (slots.length) {
+				var when = k === 1 ? 'demain' : DAY_NAMES[(now.day + k) % 7].toLowerCase();
+				return { open: false, text: 'Fermé · ouvre ' + when + ' à ' + formatTime(slots[0][0]) };
+			}
+		}
+		return { open: false, text: 'Fermé' };
 	}
 
 	function isMobile() {
 		return window.matchMedia('(max-width: 899px)').matches;
 	}
 
-	/* ------------------------------------------------------------------
-	 * Icônes
-	 * ---------------------------------------------------------------- */
-
-	var pinCache = {};
-
-	function safeColor(color, fallback) {
-		return HEX_COLOR.test(color || '') ? color : fallback;
+	function prefersReducedMotion() {
+		return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 	}
 
-	function pinIcon(color) {
-		if (!pinCache[color]) {
-			pinCache[color] = L.divIcon({
-				className: 'novi-sl-pin',
-				html: '<svg viewBox="0 0 30 40" width="30" height="40" aria-hidden="true" focusable="false">' +
-					'<path d="M15 1C7.3 1 1 7.1 1 14.8 1 25.3 15 39 15 39s14-13.7 14-24.2C29 7.1 22.7 1 15 1z" fill="' + color + '" stroke="#fff" stroke-width="2"/>' +
-					'<circle cx="15" cy="15" r="5.5" fill="#fff"/></svg>',
+	/* ------------------------------------------------------------------
+	 * Marqueurs (noir et blanc, suivent le thème via les variables CSS)
+	 * ---------------------------------------------------------------- */
+
+	var PIN_PATH = 'M15 1C7.3 1 1 7.1 1 14.8 1 25.3 15 39 15 39s14-13.7 14-24.2C29 7.1 22.7 1 15 1z';
+	var STAR_PATH = 'M15 8.6l1.9 3.9 4.3.6-3.1 3 .7 4.3-3.8-2-3.8 2 .7-4.3-3.1-3 4.3-.6z';
+	var pinCache = {};
+
+	function pinIcon(kind) {
+		if (!pinCache[kind]) {
+			var inner = kind === 'signature'
+				? '<path class="novi-sl-pin__dot" d="' + STAR_PATH + '"/>'
+				: '<circle class="novi-sl-pin__dot" cx="15" cy="15" r="5"/>';
+			pinCache[kind] = L.divIcon({
+				className: 'novi-sl-pin novi-sl-pin--' + kind,
+				html: '<svg viewBox="0 0 30 40" width="30" height="40" aria-hidden="true" focusable="false"><path class="novi-sl-pin__body" d="' + PIN_PATH + '"/>' + inner + '</svg>',
 				iconSize: [30, 40],
 				iconAnchor: [15, 39],
 				popupAnchor: [0, -34]
 			});
 		}
-		return pinCache[color];
+		return pinCache[kind];
 	}
 
-	function storeColor(store) {
-		var defaultColor = safeColor(CFG.markerColor, '#2a81cb');
-		var colors = CFG.markerColors || {};
-		return safeColor(colors[store.icone], defaultColor);
+	var userIcon = null;
+	function getUserIcon() {
+		if (!userIcon) {
+			userIcon = L.divIcon({
+				className: 'novi-sl-user',
+				html: '<span class="novi-sl-user__pulse"></span><span class="novi-sl-user__dot"></span>',
+				iconSize: [22, 22],
+				iconAnchor: [11, 11],
+				popupAnchor: [0, -12]
+			});
+		}
+		return userIcon;
 	}
 
 	/* ------------------------------------------------------------------
-	 * Contenu des fiches magasin (liste et popup)
+	 * Contenus : itinéraire, fiche, popup, fenêtre de détail
 	 * ---------------------------------------------------------------- */
 
-	/** Liens d'itinéraire vers les trois applications proposées. */
 	function directionsLinks(store, origin) {
 		var dest = store.lat + ',' + store.lng;
 		var from = origin ? origin.lat + ',' + origin.lng : '';
 		return [
-			{
-				key: 'google',
-				label: 'Google Maps',
-				url: 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest) + (from ? '&origin=' + encodeURIComponent(from) : '')
-			},
-			{
-				key: 'apple',
-				label: 'Apple Plans',
-				url: 'https://maps.apple.com/?daddr=' + encodeURIComponent(dest) + '&dirflg=d' + (from ? '&saddr=' + encodeURIComponent(from) : '')
-			},
-			{
-				key: 'waze',
-				label: 'Waze',
-				url: 'https://waze.com/ul?ll=' + encodeURIComponent(dest) + '&navigate=yes'
-			}
+			{ key: 'google', label: 'Google Maps', url: 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest) + (from ? '&origin=' + encodeURIComponent(from) : '') },
+			{ key: 'apple', label: 'Apple Plans', url: 'https://maps.apple.com/?daddr=' + encodeURIComponent(dest) + '&dirflg=d' + (from ? '&saddr=' + encodeURIComponent(from) : '') },
+			{ key: 'waze', label: 'Waze', url: 'https://waze.com/ul?ll=' + encodeURIComponent(dest) + '&navigate=yes' }
 		];
 	}
 
@@ -347,9 +471,8 @@
 	function directionsMenu(store, origin) {
 		var details = el('details', 'novi-sl__go');
 		var summary = el('summary', 'novi-sl__btn', "J'Y VAIS");
-		summary.setAttribute('aria-label', "J'y vais : choisir l'application d'itinéraire vers " + store.name);
+		summary.setAttribute('aria-label', "J'y vais : choisir l'application d'itinéraire vers " + store.title);
 		details.appendChild(summary);
-
 		var menu = el('div', 'novi-sl__go-menu');
 		menu.setAttribute('role', 'group');
 		menu.setAttribute('aria-label', 'Itinéraire avec');
@@ -358,61 +481,28 @@
 			link.href = app.url;
 			link.target = '_blank';
 			link.rel = 'noopener';
-			link.setAttribute('aria-label', 'Itinéraire vers ' + store.name + ' avec ' + app.label + ' (nouvel onglet)');
+			link.setAttribute('aria-label', 'Itinéraire vers ' + store.title + ' avec ' + app.label + ' (nouvel onglet)');
 			menu.appendChild(link);
 		});
 		details.appendChild(menu);
-
-		// Un seul menu ouvert à la fois.
 		details.addEventListener('toggle', function () {
-			if (!details.open) {
-				return;
+			if (details.open) {
+				Array.prototype.forEach.call(document.querySelectorAll('.novi-sl__go[open]'), function (other) {
+					if (other !== details) {
+						other.open = false;
+					}
+				});
 			}
-			Array.prototype.forEach.call(document.querySelectorAll('.novi-sl__go[open]'), function (other) {
-				if (other !== details) {
-					other.open = false;
-				}
-			});
 		});
 		return details;
 	}
 
-	function fillStoreDetails(container, store, distance, origin) {
-		var address = el('p', 'novi-sl__address');
-		[store.address1, store.address2, (store.postcode + ' ' + store.city).trim(), isFrance(store.country) ? '' : store.country]
-			.filter(Boolean)
-			.forEach(function (line, i) {
-				if (i) {
-					address.appendChild(document.createElement('br'));
-				}
-				address.appendChild(document.createTextNode(line));
-			});
-		container.appendChild(address);
-
-		if (store.icone === 'signature' && CFG.labels && CFG.labels.signature) {
-			container.appendChild(el('p', 'novi-sl__badge', CFG.labels.signature));
+	function openStateEl(store) {
+		var state = openState(store.hours);
+		if (!state) {
+			return null;
 		}
-		if (typeof distance === 'number') {
-			container.appendChild(el('p', 'novi-sl__distance', formatDistance(distance)));
-		}
-		if (store.phone) {
-			var phone = el('a', 'novi-sl__phone', store.phone);
-			phone.href = 'tel:' + store.phone.replace(/[^0-9+]/g, '');
-			var p = el('p', 'novi-sl__contact');
-			p.appendChild(phone);
-			container.appendChild(p);
-		}
-		if (/^https?:\/\//i.test(store.website)) {
-			var site = el('a', 'novi-sl__website', 'Site web');
-			site.href = store.website;
-			site.target = '_blank';
-			site.rel = 'noopener';
-			var ps = el('p', 'novi-sl__contact');
-			ps.appendChild(site);
-			container.appendChild(ps);
-		}
-
-		container.appendChild(directionsMenu(store, origin));
+		return el('p', 'novi-sl__open-state ' + (state.open ? 'is-open' : 'is-closed'), state.text);
 	}
 
 	/* ------------------------------------------------------------------
@@ -427,29 +517,39 @@
 		this.statusEl = root.querySelector('.novi-sl__status');
 		this.mapEl = root.querySelector('.novi-sl__map');
 		this.panel = root.querySelector('.novi-sl__panel');
+		this.panelTitle = root.querySelector('.novi-sl__panel-title');
+		this.panelToggle = root.querySelector('.novi-sl__panel-toggle');
+		this.panelOpen = root.querySelector('.novi-sl__panel-open');
 		this.emptyEl = root.querySelector('.novi-sl__empty');
 		this.resultsEl = root.querySelector('.novi-sl__results');
-		this.resultsCount = parseInt(root.getAttribute('data-results'), 10) || CFG.resultsCount || 4;
 		this.filtersEl = root.querySelector('.novi-sl__filters');
 		this.viewButtons = root.querySelectorAll('.novi-sl__view');
+		this.modal = root.querySelector('.novi-sl__modal');
+		this.modalBody = root.querySelector('.novi-sl__modal-body');
+		this.resultsCount = parseInt(root.getAttribute('data-results'), 10) || CFG.resultsCount || 4;
+		this.queryVar = CFG.queryVar || 'magasin';
+		this.baseTitle = document.title;
+
 		this.stores = [];
+		this.bySlug = {};
 		this.filters = { brands: [], services: [] };
 		this.lastSearch = null;
-
 		this.suggestions = [];
 		this.activeIndex = -1;
 		this.markers = [];
+		this.activeIndexStore = null;
 		this.userMarker = null;
 		this.userPosition = null;
 		this.userInteracted = false;
 		this.searchToken = 0;
-
-		root.style.setProperty('--novi-sl-marker', safeColor(CFG.markerColor, '#2a81cb'));
+		this.historyPushed = false;
 
 		this.initMap();
+		this.bindPanel();
 		this.bindSearch();
 		this.bindLocate();
 		this.bindViews();
+		this.bindModal();
 		this.loadMarkers();
 	}
 
@@ -462,7 +562,9 @@
 
 	StoreLocator.prototype.initMap = function () {
 		var tiles = CFG.tiles || {};
-		this.map = L.map(this.mapEl, { center: FRANCE_CENTER, zoom: 6 });
+		this.map = L.map(this.mapEl, { center: FRANCE_CENTER, zoom: 6, zoomControl: false });
+		L.control.zoom({ position: 'topright', zoomInTitle: 'Zoomer', zoomOutTitle: 'Dézoomer' }).addTo(this.map);
+		this.map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>'); // Sans drapeau : noir et blanc uniquement.
 		L.tileLayer(tiles.url, {
 			attribution: tiles.attribution,
 			tileSize: tiles.tileSize || 256,
@@ -487,7 +589,6 @@
 			}
 		});
 		this.map.addLayer(this.cluster);
-
 		this.bindMapGestures();
 
 		var map = this.map;
@@ -499,9 +600,8 @@
 	};
 
 	/**
-	 * La carte ne capture plus le défilement de la page :
-	 * - ordinateur : zoom à la molette seulement avec Ctrl (⌘ sur Mac) ;
-	 * - écran tactile : déplacement à deux doigts, un doigt fait défiler la page.
+	 * La carte ne capture pas le défilement de la page :
+	 * ordinateur → zoom à la molette avec Ctrl/⌘ ; tactile → déplacement à deux doigts.
 	 */
 	StoreLocator.prototype.bindMapGestures = function () {
 		var map = this.map;
@@ -519,14 +619,12 @@
 			}, 1300);
 		};
 		var isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-
 		mapEl.addEventListener('wheel', function (event) {
 			if (!event.ctrlKey && !event.metaKey) {
-				event.stopPropagation(); // Laisse la page défiler, Leaflet ne reçoit pas l'événement.
+				event.stopPropagation();
 				showHint(isMac ? 'Utilisez ⌘ + molette pour zoomer sur la carte' : 'Utilisez Ctrl + molette pour zoomer sur la carte');
 			}
 		}, { capture: true, passive: true });
-
 		if (window.matchMedia('(pointer: coarse)').matches) {
 			map.dragging.disable();
 			mapEl.addEventListener('touchmove', function (event) {
@@ -535,6 +633,45 @@
 				}
 			}, { passive: true });
 		}
+	};
+
+	/** Marge à laisser autour des résultats : la liste recouvre la gauche de la carte sur ordinateur. */
+	StoreLocator.prototype.mapPadding = function () {
+		if (isMobile() || this.root.classList.contains('is-panel-collapsed')) {
+			return { paddingTopLeft: [40, 40], paddingBottomRight: [40, 40] };
+		}
+		var left = this.panel.offsetLeft + this.panel.offsetWidth + 32;
+		return { paddingTopLeft: [left, 40], paddingBottomRight: [56, 40] };
+	};
+
+	/** Centre la carte sur un point en tenant compte de la liste superposée. */
+	StoreLocator.prototype.centerOn = function (latlng, zoom) {
+		var pad = this.mapPadding();
+		var offset = (pad.paddingTopLeft[0] - pad.paddingBottomRight[0]) / 2;
+		var point = this.map.project(latlng, zoom).subtract([offset, 0]);
+		this.map.setView(this.map.unproject(point, zoom), zoom, { animate: !prefersReducedMotion() });
+	};
+
+	/* ---------- Liste superposée ---------- */
+
+	StoreLocator.prototype.bindPanel = function () {
+		var self = this;
+		var set = function (collapsed) {
+			self.root.classList.toggle('is-panel-collapsed', collapsed);
+			self.panelToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+			self.panelOpen.hidden = !collapsed;
+			if (collapsed) {
+				self.panelOpen.focus();
+			} else {
+				self.panelToggle.focus();
+			}
+		};
+		this.panelToggle.addEventListener('click', function () {
+			set(true);
+		});
+		this.panelOpen.addEventListener('click', function () {
+			set(false);
+		});
 	};
 
 	/* ---------- Vue Carte / Liste (mobile) ---------- */
@@ -574,6 +711,7 @@
 				button.textContent = count ? 'Liste (' + count + ')' : 'Liste';
 			}
 		});
+		this.panelTitle.textContent = count ? count + (count > 1 ? ' points de vente' : ' point de vente') : 'Points de vente';
 	};
 
 	/* ---------- Filtres par enseigne et service ---------- */
@@ -615,9 +753,8 @@
 		});
 		var services = Object.keys(serviceCounts).sort();
 		if (brands.length < 2 && !services.length) {
-			return; // Rien à filtrer.
+			return;
 		}
-
 		var chip = function (kind, value, label, count) {
 			var button = el('button', 'novi-sl__chip novi-sl__chip--' + kind);
 			button.type = 'button';
@@ -630,7 +767,6 @@
 			}
 			return button;
 		};
-
 		this.filtersEl.textContent = '';
 		this.filtersEl.appendChild(chip('all', '', 'Tous', this.stores.length));
 		if (brands.length > 1) {
@@ -686,7 +822,6 @@
 		});
 		this.cluster.clearLayers();
 		this.cluster.addLayers(visible);
-
 		if (this.lastSearch) {
 			this.showNearest(this.lastSearch.lat, this.lastSearch.lng, this.lastSearch.options, true);
 		} else if (!visible.length) {
@@ -696,29 +831,42 @@
 		}
 	};
 
+	/* ---------- Marqueurs ---------- */
+
 	StoreLocator.prototype.loadMarkers = function () {
 		var self = this;
 		loadStores()
 			.then(function (stores) {
-				var markers = stores.map(function (store) {
+				self.stores = stores;
+				stores.forEach(function (store) {
+					if (store.slug) {
+						self.bySlug[store.slug] = store;
+					}
+				});
+				self.markers = stores.map(function (store) {
 					var marker = L.marker([store.lat, store.lng], {
-						icon: pinIcon(storeColor(store)),
-						title: store.name,
-						alt: store.name,
+						icon: pinIcon(store.icone === 'signature' ? 'signature' : 'default'),
+						title: store.title,
+						alt: store.title,
 						riseOnHover: true
 					});
 					marker.bindPopup(function () {
 						return self.popupContent(store);
-					}, { maxWidth: 260 });
+					}, { maxWidth: 280, minWidth: 220 });
 					marker.on('click', function () {
-						self.highlightCard(store.index, true);
+						self.setActive(store.index, true);
+					});
+					marker.on('mouseover', function () {
+						self.setHot(store.index, true, 'marker');
+					});
+					marker.on('mouseout', function () {
+						self.setHot(store.index, false, 'marker');
 					});
 					return marker;
 				});
-				self.stores = stores;
-				self.markers = markers;
-				self.cluster.addLayers(markers);
+				self.cluster.addLayers(self.markers);
 				self.renderFilters();
+				self.openFromUrl(true);
 			})
 			.catch(function (error) {
 				self.setStatus('Impossible de charger la liste des points de vente. Veuillez réessayer plus tard.', true);
@@ -728,15 +876,109 @@
 			});
 	};
 
+	/** Élément visible représentant un magasin : son marqueur, ou le groupe qui le contient. */
+	StoreLocator.prototype.markerElement = function (index) {
+		var marker = this.markers[index];
+		if (!marker) {
+			return null;
+		}
+		if (marker._icon) {
+			return marker._icon;
+		}
+		var parent = this.cluster.getVisibleParent(marker);
+		return parent && parent._icon ? parent._icon : null;
+	};
+
+	/** Survol lié : fiche ↔ marqueur. */
+	StoreLocator.prototype.setHot = function (index, on, from) {
+		var icon = this.markerElement(index);
+		if (icon) {
+			icon.classList.toggle('is-hot', on);
+			if (this.markers[index]._icon === icon) {
+				this.markers[index].setZIndexOffset(on ? 900 : 0);
+			}
+		}
+		if (from === 'marker') {
+			var card = this.resultsEl.querySelector('[data-index="' + index + '"]');
+			if (card) {
+				card.classList.toggle('is-hot', on);
+			}
+		}
+	};
+
+	/** Magasin sélectionné : fiche et marqueur mis en évidence. */
+	StoreLocator.prototype.setActive = function (index, scroll) {
+		var previous = this.activeIndexStore;
+		if (previous !== null && this.markers[previous] && this.markers[previous]._icon) {
+			this.markers[previous]._icon.classList.remove('is-active');
+		}
+		this.activeIndexStore = index;
+		var icon = this.markers[index] && this.markers[index]._icon;
+		if (icon) {
+			icon.classList.add('is-active');
+		}
+		var target = null;
+		Array.prototype.forEach.call(this.resultsEl.querySelectorAll('.novi-sl__card'), function (card) {
+			var match = card.getAttribute('data-index') === String(index);
+			card.classList.toggle('is-active', match);
+			if (match) {
+				target = card;
+			}
+		});
+		if (target && scroll && this.panel.scrollHeight > this.panel.clientHeight + 1) {
+			this.panel.scrollTo({ top: target.offsetTop - 12, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+		}
+	};
+
+	StoreLocator.prototype.storeUrl = function (store) {
+		// Garde les paramètres de la page (?page_id=…, ?lang=…) et remplace seulement celui du magasin.
+		var url = new URL(this.root.getAttribute('data-page-url') || window.location.href, window.location.href);
+		url.hash = '';
+		url.searchParams.set(this.queryVar, store.slug);
+		return url.toString();
+	};
+
+	/** Lien « Voir la fiche » : vraie URL (indexable), ouverte dans la fenêtre de détail. */
+	StoreLocator.prototype.sheetLink = function (store, label) {
+		var self = this;
+		var link = el('a', 'novi-sl__more', label || 'Voir la fiche');
+		if (!store.slug) {
+			return null;
+		}
+		link.href = this.storeUrl(store);
+		link.setAttribute('aria-label', 'Voir la fiche de ' + store.title);
+		link.addEventListener('click', function (event) {
+			if (event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1) {
+				return; // Ouvrir dans un nouvel onglet : comportement normal.
+			}
+			event.preventDefault();
+			self.openStore(store, { push: true });
+		});
+		return link;
+	};
+
 	StoreLocator.prototype.popupContent = function (store) {
 		var box = el('div', 'novi-sl-popup');
-		box.appendChild(el('p', 'novi-sl-popup__title', store.name));
-		var distance = this.userPosition ? distanceKm(this.userPosition.lat, this.userPosition.lng, store.lat, store.lng) : null;
-		fillStoreDetails(box, store, distance, this.userPosition);
+		if (store.brandName) {
+			box.appendChild(el('p', 'novi-sl__eyebrow', store.brandName));
+		}
+		box.appendChild(el('p', 'novi-sl-popup__title', store.short));
+		box.appendChild(el('p', 'novi-sl__address', addressLine(store)));
+		var state = openStateEl(store);
+		if (state) {
+			box.appendChild(state);
+		}
+		var actions = el('div', 'novi-sl__card-actions');
+		actions.appendChild(directionsMenu(store, this.userPosition));
+		var more = this.sheetLink(store);
+		if (more) {
+			actions.appendChild(more);
+		}
+		box.appendChild(actions);
 		return box;
 	};
 
-	StoreLocator.prototype.focusStore = function (store) {
+	StoreLocator.prototype.focusStore = function (store, withPopup) {
 		var marker = this.markers[store.index];
 		if (!marker) {
 			return;
@@ -745,23 +987,22 @@
 			this.pendingBounds = null;
 			this.setView('map');
 		}
-		var map = this.map;
+		var self = this;
 		var cluster = this.cluster;
-		var latlng = marker.getLatLng();
 		var open = function () {
 			cluster.zoomToShowLayer(marker, function () {
-				marker.openPopup();
+				self.setActive(store.index, false);
+				if (withPopup !== false) {
+					marker.openPopup();
+				}
 			});
 		};
-		this.highlightCard(store.index, false);
-		if (map.getZoom() >= FOCUS_ZOOM && map.getBounds().contains(latlng)) {
-			open();
-		} else {
-			map.once('moveend', function () {
-				setTimeout(open, 0);
-			});
-			map.setView(latlng, Math.max(map.getZoom(), FOCUS_ZOOM));
-		}
+		this.setActive(store.index, false);
+		var zoom = Math.max(this.map.getZoom(), FOCUS_ZOOM);
+		this.map.once('moveend', function () {
+			setTimeout(open, 0);
+		});
+		this.centerOn(marker.getLatLng(), zoom);
 	};
 
 	/* ---------- Résultats ---------- */
@@ -793,7 +1034,6 @@
 				});
 
 			var list = ranked.slice(0, self.resultsCount);
-			// Tous les magasins de la commune recherchée, même au-delà du nombre demandé.
 			if (options.postcode) {
 				ranked.slice(self.resultsCount).forEach(function (r) {
 					if (r.store.postcode === options.postcode) {
@@ -815,16 +1055,17 @@
 			self.pendingBounds = null;
 			if (!options.focusStore) {
 				if (self.root.getAttribute('data-view') === 'list' && isMobile()) {
-					self.pendingBounds = bounds; // Carte masquée : cadrage au retour sur la vue Carte.
+					self.pendingBounds = bounds;
 				} else {
-					self.map.fitBounds(bounds, { padding: [40, 40], maxZoom: FOCUS_ZOOM });
+					var pad = self.mapPadding();
+					self.map.fitBounds(bounds, { paddingTopLeft: pad.paddingTopLeft, paddingBottomRight: pad.paddingBottomRight, maxZoom: FOCUS_ZOOM, animate: !prefersReducedMotion() });
 				}
 			}
 
 			var count = list.length;
 			self.setStatus(
 				(count > 1 ? 'Les ' + count + ' points de vente les plus proches de ' : 'Le point de vente le plus proche de ') +
-				options.label + ' (' + formatDistance(list[0].distance).replace('à ', 'le premier à ') + ').'
+				options.label + ' (le premier à ' + formatDistance(list[0].distance) + ').'
 			);
 		}).catch(function () {
 			self.setStatus('Impossible de charger la liste des points de vente. Veuillez réessayer plus tard.', true);
@@ -835,42 +1076,292 @@
 		var self = this;
 		this.resultsEl.textContent = '';
 		this.emptyEl.hidden = list.length > 0;
+		this.activeIndexStore = null;
 
-		list.forEach(function (r) {
+		list.forEach(function (r, i) {
 			var store = r.store;
 			var card = el('li', 'novi-sl__card');
 			card.setAttribute('data-index', String(store.index));
+			card.style.setProperty('--i', String(i));
 
-			var title = el('button', 'novi-sl__card-title', store.name);
+			var top = el('div', 'novi-sl__card-top');
+			top.appendChild(el('p', 'novi-sl__eyebrow', store.brandName || ' '));
+			top.appendChild(el('p', 'novi-sl__distance', formatDistance(r.distance)));
+			card.appendChild(top);
+
+			var heading = el('h3', 'novi-sl__card-heading');
+			var title = el('button', 'novi-sl__card-title', store.short);
 			title.type = 'button';
-			title.setAttribute('aria-label', store.name + ' — afficher sur la carte');
-			card.appendChild(title);
-			fillStoreDetails(card, store, r.distance, self.userPosition);
+			title.setAttribute('aria-label', store.title + ' — afficher sur la carte');
+			heading.appendChild(title);
+			card.appendChild(heading);
+
+			card.appendChild(el('p', 'novi-sl__address', addressLine(store)));
+			var state = openStateEl(store);
+			if (state) {
+				card.appendChild(state);
+			}
+			if (store.phone) {
+				var phone = el('a', 'novi-sl__phone', formatPhone(store.phone));
+				phone.href = 'tel:' + store.phone.replace(/[^0-9+]/g, '');
+				var p = el('p', 'novi-sl__contact');
+				p.appendChild(phone);
+				card.appendChild(p);
+			}
+
+			var actions = el('div', 'novi-sl__card-actions');
+			actions.appendChild(directionsMenu(store, self.userPosition));
+			var more = self.sheetLink(store);
+			if (more) {
+				actions.appendChild(more);
+			}
+			card.appendChild(actions);
 
 			card.addEventListener('click', function (event) {
 				if (event.target.closest('a, details')) {
-					return; // Téléphone, site, menu d'itinéraire : comportement normal.
+					return;
 				}
 				self.focusStore(store);
+			});
+			card.addEventListener('mouseenter', function () {
+				self.setHot(store.index, true, 'card');
+			});
+			card.addEventListener('mouseleave', function () {
+				self.setHot(store.index, false, 'card');
+			});
+			card.addEventListener('focusin', function () {
+				self.setHot(store.index, true, 'card');
+			});
+			card.addEventListener('focusout', function () {
+				self.setHot(store.index, false, 'card');
 			});
 			self.resultsEl.appendChild(card);
 		});
 		this.panel.scrollTop = 0;
 	};
 
-	StoreLocator.prototype.highlightCard = function (index, scroll) {
-		var cards = this.resultsEl.querySelectorAll('.novi-sl__card');
-		var target = null;
-		Array.prototype.forEach.call(cards, function (card) {
-			var match = card.getAttribute('data-index') === String(index);
-			card.classList.toggle('is-active', match);
-			if (match) {
-				target = card;
+	/* ---------- Fenêtre de détail (fiche magasin, URL propre) ---------- */
+
+	StoreLocator.prototype.bindModal = function () {
+		var self = this;
+		var modal = this.modal;
+		if (!modal) {
+			return;
+		}
+		modal.querySelector('.novi-sl__modal-close').addEventListener('click', function () {
+			self.closeStore();
+		});
+		modal.addEventListener('click', function (event) {
+			if (event.target === modal) {
+				self.closeStore(); // Clic sur le fond.
 			}
 		});
-		// Défilement interne du panneau uniquement (pas de saut de page sur mobile).
-		if (target && scroll && this.panel.scrollHeight > this.panel.clientHeight + 1) {
-			this.panel.scrollTo({ top: target.offsetTop - this.panel.offsetTop - 8, behavior: 'smooth' });
+		// Échap géré ici : Chrome peut ignorer Échap sur une fenêtre ouverte sans geste de l'utilisateur
+		// (Précédent / Suivant, lien direct).
+		modal.addEventListener('cancel', function (event) {
+			event.preventDefault();
+			self.closeStore();
+		});
+		document.addEventListener('keydown', function (event) {
+			if (event.key === 'Escape' && modal.open && !document.querySelector('.novi-sl__go[open]')) {
+				event.preventDefault();
+				self.closeStore();
+			}
+		});
+		// Fermeture par le navigateur lui-même : l'URL et le titre suivent.
+		modal.addEventListener('close', function () {
+			if (self.root.classList.contains('has-modal')) {
+				self.afterClose(false);
+			}
+		});
+		modal.addEventListener('click', function (event) {
+			if (event.target.closest('.novi-sl__show-map')) {
+				var slug = modal.querySelector('.novi-sl__sheet').getAttribute('data-slug');
+				self.closeStore();
+				if (self.bySlug[slug]) {
+					self.focusStore(self.bySlug[slug]);
+				}
+			}
+		});
+		window.addEventListener('popstate', function () {
+			self.openFromUrl(false);
+		});
+	};
+
+	StoreLocator.prototype.fillSheet = function (store) {
+		var id = this.modal.id + '-title';
+		var sheet = el('article', 'novi-sl__sheet');
+		sheet.setAttribute('data-slug', store.slug);
+		if (store.brandName) {
+			sheet.appendChild(el('p', 'novi-sl__eyebrow', store.brandName));
+		}
+		var h = el('h2', 'novi-sl__modal-title', store.title);
+		h.id = id;
+		sheet.appendChild(h);
+		var state = openStateEl(store);
+		if (state) {
+			sheet.appendChild(state);
+		}
+
+		var facts = el('dl', 'novi-sl__facts');
+		var fact = function (label, content) {
+			var wrap = el('div', 'novi-sl__fact');
+			wrap.appendChild(el('dt', '', label));
+			var dd = el('dd');
+			dd.appendChild(content);
+			wrap.appendChild(dd);
+			facts.appendChild(wrap);
+		};
+
+		var address = el('address');
+		[store.address1, store.address2, (store.postcode + ' ' + titleCase(store.city)).trim(), isFrance(store.country) ? '' : store.country]
+			.filter(Boolean)
+			.forEach(function (line, i) {
+				if (i) {
+					address.appendChild(document.createElement('br'));
+				}
+				address.appendChild(document.createTextNode(line));
+			});
+		if (this.userPosition) {
+			address.appendChild(el('span', 'novi-sl__distance', ' · à ' + formatDistance(distanceKm(this.userPosition.lat, this.userPosition.lng, store.lat, store.lng))));
+		}
+		fact('Adresse', address);
+
+		if (store.phone) {
+			var phone = el('a', '', formatPhone(store.phone));
+			phone.href = 'tel:' + store.phone.replace(/[^0-9+]/g, '');
+			fact('Téléphone', phone);
+		}
+
+		if (Array.isArray(store.hours) && store.hours.length === 7) {
+			var table = el('table', 'novi-sl__week');
+			var tbody = el('tbody');
+			var today = parisNow().day;
+			DAY_NAMES.forEach(function (day, i) {
+				var tr = el('tr');
+				tr.setAttribute('data-day', String(i));
+				if (i === today) {
+					tr.className = 'is-today';
+				}
+				var th = el('th', '', day);
+				th.setAttribute('scope', 'row');
+				tr.appendChild(th);
+				var slots = store.hours[i] || [];
+				tr.appendChild(el('td', '', slots.length ? slots.map(function (s) {
+					return formatTime(s[0]) + ' – ' + formatTime(s[1]);
+				}).join(', ') : 'Fermé'));
+				tbody.appendChild(tr);
+			});
+			table.appendChild(tbody);
+			fact('Horaires', table);
+		} else if (store.hoursText) {
+			var text = el('div');
+			store.hoursText.split('\n').forEach(function (line, i) {
+				if (i) {
+					text.appendChild(document.createElement('br'));
+				}
+				text.appendChild(document.createTextNode(line));
+			});
+			fact('Horaires', text);
+		}
+
+		if (store.serviceList.length) {
+			var tags = el('ul', 'novi-sl__tags');
+			store.serviceList.forEach(function (s) {
+				tags.appendChild(el('li', '', s));
+			});
+			fact('Services', tags);
+		}
+
+		if (/^https?:\/\//i.test(store.website)) {
+			var site = el('a', '', store.website.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''));
+			site.href = store.website;
+			site.target = '_blank';
+			site.rel = 'noopener';
+			fact('Site web', site);
+		}
+		sheet.appendChild(facts);
+
+		var actions = el('div', 'novi-sl__sheet-actions');
+		actions.appendChild(directionsMenu(store, this.userPosition));
+		var mapBtn = el('button', 'novi-sl__btn novi-sl__btn--ghost novi-sl__show-map', 'Voir sur la carte');
+		mapBtn.type = 'button';
+		actions.appendChild(mapBtn);
+		sheet.appendChild(actions);
+
+		this.modalBody.textContent = '';
+		this.modalBody.appendChild(sheet);
+	};
+
+	StoreLocator.prototype.openStore = function (store, options) {
+		options = options || {};
+		if (!this.modal || !store) {
+			return;
+		}
+		this.lastFocus = document.activeElement;
+		this.fillSheet(store);
+		if (this.modal.open) {
+			this.modal.close(); // Fiche rendue par le serveur (non modale) : rouverte en modale.
+		}
+		if (typeof this.modal.showModal === 'function') {
+			this.modal.showModal();
+		} else {
+			this.modal.setAttribute('open', '');
+		}
+		this.root.classList.add('has-modal');
+		document.title = store.title + ' : adresse, horaires et téléphone – ' + this.baseTitle;
+		var url = this.storeUrl(store);
+		if (options.push && window.location.href !== url) {
+			window.history.pushState({ noviSl: store.slug }, '', url);
+			this.historyPushed = true;
+		}
+		// La carte se place sur le magasin derrière la fenêtre.
+		this.setActive(store.index, true);
+		var marker = this.markers[store.index];
+		if (marker && !isMobile()) {
+			this.centerOn(marker.getLatLng(), Math.max(this.map.getZoom(), FOCUS_ZOOM));
+		}
+	};
+
+	StoreLocator.prototype.closeStore = function (fromHistory) {
+		if (!this.modal || !this.modal.open) {
+			return;
+		}
+		this.root.classList.remove('has-modal');
+		this.modal.close();
+		this.afterClose(fromHistory);
+	};
+
+	StoreLocator.prototype.afterClose = function (fromHistory) {
+		this.root.classList.remove('has-modal');
+		document.title = this.baseTitle;
+		if (!fromHistory) {
+			if (this.historyPushed) {
+				this.historyPushed = false;
+				window.history.back();
+			} else {
+				var url = new URL(window.location.href);
+				url.searchParams.delete(this.queryVar);
+				window.history.replaceState({}, '', url.toString());
+			}
+		}
+		if (this.lastFocus && typeof this.lastFocus.focus === 'function' && document.body.contains(this.lastFocus)) {
+			this.lastFocus.focus();
+		}
+	};
+
+	/** Ouvre ou ferme la fiche selon l'URL (chargement direct ou boutons Précédent/Suivant). */
+	StoreLocator.prototype.openFromUrl = function (initial) {
+		var slug = new URL(window.location.href).searchParams.get(this.queryVar);
+		var store = slug ? this.bySlug[slug] : null;
+		if (store) {
+			if (!this.modal.open || initial || this.modal.querySelector('.novi-sl__sheet[data-slug]') === null ||
+				this.modal.querySelector('.novi-sl__sheet').getAttribute('data-slug') !== slug || !this.root.classList.contains('has-modal')) {
+				this.openStore(store, { push: false });
+			}
+		} else if (this.modal && this.modal.open) {
+			this.historyPushed = false;
+			this.closeStore(true);
 		}
 	};
 
@@ -901,13 +1392,13 @@
 					if (!open) {
 						self.updateSuggestions();
 					} else {
-						self.setActive(self.activeIndex + 1);
+						self.setActiveOption(self.activeIndex + 1);
 					}
 					break;
 				case 'ArrowUp':
 					if (open) {
 						event.preventDefault();
-						self.setActive(self.activeIndex - 1);
+						self.setActiveOption(self.activeIndex - 1);
 					}
 					break;
 				case 'Enter':
@@ -1028,7 +1519,7 @@
 		this.openSuggestions();
 	};
 
-	StoreLocator.prototype.setActive = function (index) {
+	StoreLocator.prototype.setActiveOption = function (index) {
 		var options = this.listbox.querySelectorAll('[data-i]');
 		if (!options.length) {
 			return;
@@ -1120,7 +1611,7 @@
 
 				if (!self.userMarker) {
 					self.userMarker = L.marker([lat, lng], {
-						icon: L.icon({ iconUrl: CFG.userIconUrl, iconSize: [38, 38], iconAnchor: [19, 38], popupAnchor: [0, -38] }),
+						icon: getUserIcon(),
 						title: 'Votre position',
 						alt: 'Votre position',
 						zIndexOffset: 1000
@@ -1152,7 +1643,11 @@
 
 	document.addEventListener('keydown', function (event) {
 		if (event.key === 'Escape') {
-			Array.prototype.forEach.call(document.querySelectorAll('.novi-sl__go[open]'), function (d) {
+			var menus = document.querySelectorAll('.novi-sl__go[open]');
+			if (menus.length) {
+				event.preventDefault(); // Ferme d'abord le menu, pas la fiche.
+			}
+			Array.prototype.forEach.call(menus, function (d) {
 				d.open = false;
 				d.querySelector('summary').focus();
 			});

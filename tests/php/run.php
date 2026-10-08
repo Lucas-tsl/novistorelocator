@@ -117,6 +117,24 @@ novi_sl_assert( false !== strpos( $r['fatal'], 'page web' ), 'page de connexion 
 $r = novi_sl_import_csv( "ville,cp\nParis,75001\n", false );
 novi_sl_assert( false !== strpos( $r['fatal'], 'Colonnes obligatoires' ), 'en-tête invalide bloquant' );
 
+echo "Mise en forme des magasins\n";
+novi_sl_assert( 'Beauty Success Le Bouscat' === novi_sl_title_case( 'BEAUTY SUCCESS LE BOUSCAT' ), 'nom en majuscules remis en casse lisible' );
+novi_sl_assert( "Villenave d'Ornon" === novi_sl_title_case( 'VILLENAVE D ORNON' ) && 'Saint-Jean-de-Luz' === novi_sl_title_case( 'SAINT-JEAN-DE-LUZ' ), 'règles françaises (élision, mots composés)' );
+novi_sl_assert( 'Talence CC' === novi_sl_title_case( 'TALENCE CC' ), 'sigles conservés en majuscules' );
+$st = array( 'name' => 'BEAUTY SUCCESS PESSAC', 'brand' => '', 'city' => 'PESSAC', 'id' => '1' );
+novi_sl_assert( 'Beauty Success' === novi_sl_store_brand( $st ) && 'Pessac' === novi_sl_store_short_title( $st ), 'enseigne détectée et nom court' );
+novi_sl_assert( '05 56 08 09 10' === novi_sl_format_phone( '0556080910' ) && '+32 2 123 45 67' === novi_sl_format_phone( '+32 2 123 45 67' ), 'téléphone mis en forme' );
+$h = novi_sl_parse_hours( "Lun au ven 9h-12h 14h-19h | Sam 9h30-18h; Dimanche fermé" );
+novi_sl_assert( array( array( '09:00', '12:00' ), array( '14:00', '19:00' ) ) === $h[0] && array( array( '09:30', '18:00' ) ) === $h[5] && array() === $h[6], 'horaires avec coupure lus jour par jour' );
+novi_sl_assert( null === novi_sl_parse_hours( 'Ouvert selon saison' ), 'horaires libres non interprétés (affichés tels quels)' );
+$list = array( array( 'name' => 'Magasin Été', 'city' => 'Lyon', 'id' => '1' ), array( 'name' => 'MAGASIN ÉTÉ', 'city' => 'Paris', 'id' => '2' ), array( 'name' => 'Magasin Été', 'city' => 'Paris', 'id' => '3' ) );
+novi_sl_assign_slugs( $list );
+novi_sl_assert( array( 'magasin-ete', 'magasin-ete-paris', 'magasin-ete-2' ) === array_column( $list, 'slug' ), 'identifiants d\'URL uniques et lisibles' );
+$r = novi_sl_import_csv( "name,latitude,longitude,city,horaires,telephone\nBoutique,48.1,2.1,Paris,\"Mardi-Samedi 10h-19h\",0142000000\n", false );
+novi_sl_assert( 'boutique' === $r['stores'][0]['slug'] && 'Mardi-Samedi 10h-19h' === $r['stores'][0]['hours_text'] && array( array( '10:00', '19:00' ) ) === $r['stores'][0]['hours'][1], 'colonne horaires importée' );
+$desc = novi_sl_store_seo_description( array( 'name' => 'BEAUTY SUCCESS PESSAC', 'brand' => '', 'address1' => '1 av. Eiffel', 'address2' => '', 'postcode' => '33600', 'city' => 'PESSAC', 'country' => 'France', 'hours_text' => 'Lun-Sam 9h-19h', 'phone' => '0556000000' ) );
+novi_sl_assert( false !== strpos( $desc, '33600 Pessac' ) && false !== strpos( $desc, 'Lun-Sam 9h-19h' ) && false !== strpos( $desc, '05 56 00 00 00' ), 'description SEO de la fiche (adresse, horaires, téléphone)' );
+
 echo "Géocodage (réponse simulée)\n";
 novi_sl_mock_http( 200, wp_json_encode( array( 'features' => array( array( 'geometry' => array( 'coordinates' => array( 6.1294, 45.8992 ) ), 'properties' => array( 'score' => 0.92 ) ) ) ) ) );
 $r = novi_sl_import_csv( novi_sl_csv( array( array( '9', '1', 'Annecy test ' . wp_generate_password( 6, false ), 'Annecy', '74000', '1 rue Royale ' . wp_rand(), '', '', 'France', '' ) ) ), true );

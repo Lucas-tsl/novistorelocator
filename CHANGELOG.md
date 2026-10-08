@@ -27,6 +27,11 @@
 - Liste latérale défilant verticalement ; plus de saut de mise en page au survol des suggestions.
 
 ### Expérience utilisateur
+- Palette strictement noir / blanc / gris : boutons, filtres, marqueurs (blancs sur fond sombre, noirs sur fond clair), fond de carte désaturé (inversé en thème sombre). Les réglages de couleur ont été retirés.
+- Grande carte plein cadre avec la liste des magasins superposée à gauche (repliable). Survol lié : survoler une fiche met son marqueur en avant, survoler un marqueur met sa fiche en avant.
+- Fiches hiérarchisées : enseigne en petites capitales, nom du magasin en titre, adresse, état « Ouvert / Fermé », téléphone, alignées à gauche.
+- Micro-animations : apparition des fiches en cascade, marqueur qui grossit au survol et rebondit à la sélection, ouverture des menus et de la fiche ; toutes désactivées si le visiteur a demandé moins d'animations.
+- Fiche magasin en fenêtre avec sa propre URL (`?magasin=…`) : adresse, téléphone, horaires de la semaine, services, itinéraire.
 - « J'Y VAIS » propose le choix de l'application d'itinéraire : Google Maps, Apple Plans ou Waze.
 - Filtres par enseigne (détectée depuis le nom du magasin ou une colonne `enseigne`) et par service (colonne `services`, icône « signature »), avec le nombre de points de vente.
 - Mobile : bascule Carte / Liste, barre de recherche qui reste visible en haut, déplacement de la carte à deux doigts (un doigt fait défiler la page).
@@ -47,6 +52,8 @@
 - Fonctions préfixées `novi_sl_`.
 
 ### Référencement
+- Une URL indexable par magasin, rendue côté serveur avec titre, description, canonique et données structurées `Store` (horaires, téléphone, enseigne) ; ajout au plan du site (WordPress, Yoast SEO) ; compatibilité Yoast SEO et Rank Math ; redirection 301 des identifiants inconnus.
+- Colonne `horaires` (texte libre interprété) et mise en forme automatique des noms en majuscules et des téléphones.
 - Données structurées JSON-LD (`schema.org/Store`) sur la page du store locator (désactivables).
 - Nouveau shortcode `[store_locator_list]` : liste HTML complète des magasins.
 

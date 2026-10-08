@@ -275,3 +275,28 @@ function novi_sl_maybe_migrate() {
 
 	update_option( 'novi_sl_db_version', NOVI_SL_VERSION );
 }
+
+/**
+ * Version du format des données magasins :
+ * 2 = identifiant d'URL (slug), horaires, enseigne et services.
+ */
+define( 'NOVI_SL_DATA_VERSION', 2 );
+
+/**
+ * Met au format courant une liste enregistrée par une version précédente du plugin.
+ */
+function novi_sl_maybe_upgrade_data() {
+	if ( (int) get_option( 'novi_sl_data_version', 1 ) >= NOVI_SL_DATA_VERSION ) {
+		return;
+	}
+	$stores = novi_sl_read_stores_file( novi_sl_stores_path() );
+	if ( $stores ) {
+		$result = novi_sl_import_rows( $stores, false );
+		if ( $result['stores'] ) {
+			$path = novi_sl_stores_path();
+			novi_sl_put_contents( $path, wp_json_encode( array_values( $result['stores'] ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) );
+		}
+	}
+	update_option( 'novi_sl_data_version', NOVI_SL_DATA_VERSION );
+}
+add_action( 'plugins_loaded', 'novi_sl_maybe_upgrade_data', 20 );
