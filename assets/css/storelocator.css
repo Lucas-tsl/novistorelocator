@@ -1,0 +1,177 @@
+/* overright */
+.leaflet-popup-content-wrapper .leaflet-popup-content {
+    margin-bottom: 13px;
+}
+
+.store-locator{
+    font-family: 'Poppins', sans-serif;
+    color:black;
+}
+
+.popup-marker img{
+    width: 100%;
+}
+
+.popup-info{
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.map-cont a.sl-btn{
+    padding: 7px 10px 5px 10px;
+    background-color: blueviolet;
+    color: white;
+    font-weight: 700;
+    border-radius: 50px;
+    margin-top: 10px;
+    text-decoration: none;
+}
+
+.store-locator .hidden{
+    display:none;
+}
+
+.store-locator .flex{
+    display:flex;
+}
+
+.store-locator .shearchbar{
+    width: fit-content;
+    margin: 0 auto;
+    width: 70vw;
+    height: 30px;
+    margin-bottom: 10px;
+}
+
+.store-locator .shearchbar #label{
+    width: 90%;
+}
+
+.store-locator .shearchbar #btn{
+    width: 10%;
+}
+
+.store-locator #map{
+    height: 70vh;
+    width: 70%;
+    position: relative;
+    z-index: 0;
+}
+
+.store-locator .map-cont{
+    margin: 0 auto;
+    justify-content: space-between;
+    gap: 25px;
+    width: 100%;
+}
+
+.store-locator .sl-card{
+    border-radius: 25px;
+    box-shadow: 0px 5px 7px 1px rgba(0, 0, 0, 0.2);
+    padding:7% 20px 7% 20px;
+    /*height: 25%;*/
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2%;
+}
+
+.store-locator .sl-card .sl-card-title{
+    font-size: 16px;
+    line-height: 18px;
+    margin-bottom: 3px;
+}
+
+.store-locator .sl-card .sl-card-subtitle{
+    font-size: 12px;
+    line-height: 13px;
+}
+
+.store-locator .main-cont{
+    display: flex;
+    flex-direction: column;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.store-locator .listinfo{
+    display: flex;
+    flex-direction: column;
+    height: 70vh;
+    width: 30%;
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.store-locator .sl-card > div:last-of-type {
+    margin-bottom: 15px;
+}
+
+.store-locator .listinfo-title {
+    font-weight: 700;
+    font-size: 25px;
+}
+
+.store-locator .listinfo-subtitle {
+    font-weight: 700;
+    font-size: 17px;
+    margin-bottom:20px;
+}
+
+.store-locator .map-cont{
+    margin-bottom: 100px;
+}
+
+.store-locator .search-fields{
+    margin: 0 auto;
+    width: 100%;
+    position: relative;
+}
+
+.store-locator .search-fields input{
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.store-locator #searchResults{
+    margin: 0;
+    position: absolute;
+    z-index: 10000;
+    background: rgba(255,255,255,0.9);
+    width: 100%;
+    max-height: 45vh;
+    overflow: overlay;
+}
+
+.store-locator #searchResults div{
+    padding: 5px 25px;
+    border-bottom: 1px solid #cbcbcb;
+    font-weight: 400;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.store-locator #searchResults div:hover{
+    font-weight: 700;
+    font-size: 17px;
+    transition: 0.3s;
+}
+
+.store-locator input{
+    box-sizing:border-box;
+    font-size:17px;
+}
+
+@media screen and (max-width: 899px) {
+    .store-locator .map-cont{
+        flex-direction: column;
+    }
+    .store-locator .listinfo {
+        width: 90%;
+        margin: 0 auto;
+        height: auto;
+    }
+    .store-locator #map {
+        width: 100%;
+    }
+}
