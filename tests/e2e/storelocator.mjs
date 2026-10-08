@@ -206,6 +206,55 @@ const input = `${root} .novi-sl__input`;
 	await context.close();
 }
 
+/* ---------------- Zone, « Voir plus », mémoire ---------------- */
+{
+	const { page, errors, context } = await newPage({ width: 1280, height: 900 });
+	await page.waitForSelector(`${root} .novi-sl-cluster, ${root} .novi-sl-pin`);
+	await page.fill(input, 'paris');
+	await page.waitForTimeout(250);
+	check(!/Recherche en cours/.test(await page.locator(root).innerText()), 'plus de texte « Recherche en cours… »');
+	await page.locator(`${root} .novi-sl__suggestion--place`, { hasText: '75001' }).first().click();
+	await page.waitForSelector(`${root} .novi-sl__card`);
+	await page.waitForTimeout(1200);
+	check(await page.locator(`${root} .novi-sl__area`).isHidden(), '« Rechercher dans cette zone » masqué après une recherche');
+
+	// « Voir plus ».
+	const before = await page.locator(`${root} .novi-sl__card`).count();
+	await page.locator(`${root} .novi-sl__more-results`).click();
+	await page.waitForTimeout(300);
+	const after = await page.locator(`${root} .novi-sl__card`).count();
+	check(after > before, `« Voir plus » ajoute des points de vente (${before} → ${after})`);
+
+	// Déplacement de la carte par le visiteur → « Rechercher dans cette zone ».
+	const box = await page.locator(`${root} .novi-sl__map`).boundingBox();
+	await page.mouse.move(box.x + box.width - 150, box.y + box.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(box.x + box.width - 450, box.y + box.height / 2 - 120, { steps: 12 });
+	await page.mouse.up();
+	await page.locator(`${root} .novi-sl__area`).waitFor({ state: 'visible', timeout: 3000 });
+	check(true, '« Rechercher dans cette zone » apparaît quand on déplace la carte');
+	await page.locator(`${root} .novi-sl__area`).click();
+	await page.waitForTimeout(400);
+	check(/dans cette zone/.test(await page.locator(`${root} .novi-sl__status`).innerText()), 'recherche dans la zone visible');
+
+	// Application d'itinéraire mémorisée.
+	await page.locator(`${root} .novi-sl__card .novi-sl__go summary`).first().click();
+	const [popup] = await Promise.all([
+		context.waitForEvent('page'),
+		page.locator(`${root} .novi-sl__card .novi-sl__go-link--waze`).first().click()
+	]);
+	await popup.close();
+
+	// Rechargement : dernière recherche et Waze en premier.
+	await page.reload({ waitUntil: 'networkidle' });
+	await page.waitForSelector(`${root} .novi-sl__card`, { timeout: 8000 });
+	check(/Votre dernière recherche/.test(await page.locator(`${root} .novi-sl__status`).innerText()) && /Paris/.test(await page.locator(input).inputValue()), 'dernière recherche réaffichée au retour sur la page');
+	const firstApp = await page.locator(`${root} .novi-sl__card .novi-sl__go-link`).first().textContent();
+	check(firstApp === 'Waze', `application d'itinéraire choisie proposée en premier (${firstApp})`);
+	check(errors.length === 0, `aucune erreur JavaScript (zone, mémoire)${errors.length ? ' : ' + errors.join(' | ') : ''}`);
+	await context.close();
+}
+
 /* ---------------- Filtres ---------------- */
 {
 	const { page, errors, context } = await newPage({ width: 1280, height: 900 });

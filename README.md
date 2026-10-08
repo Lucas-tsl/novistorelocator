@@ -51,6 +51,17 @@ Chaque magasin a sa propre adresse : `https://votre-site/page-du-store-locator/?
 - Les fiches sont ajoutées au plan du site : `wp-sitemap.xml` (WordPress) ou le plan des pages de Yoast SEO. Avec Yoast SEO ou Rank Math, le titre, la description et l'URL canonique leur sont transmis.
 - Un identifiant inconnu (magasin retiré) redirige de façon permanente (301) vers la page du store locator.
 
+### Côté visiteur
+
+- **Rechercher dans cette zone** : apparaît quand on déplace ou zoome la carte ; liste les points de vente visibles.
+- **Voir plus de points de vente** : sous la liste, ajoute les suivants par ordre de distance.
+- **Mémoire** : la dernière recherche est réaffichée au retour sur la page (30 jours), et l'application d'itinéraire choisie (Google Maps, Apple Plans, Waze) est proposée en premier. Ces informations restent dans le navigateur du visiteur.
+
+### Alerte et marque
+
+- **E-mail d'alerte** (Paramètres > Google Sheets) : prévenu si la synchronisation automatique échoue, au plus une fois par jour.
+- **Marque vendue** (Paramètres > Référencement) : chaque revendeur est décrit aux moteurs de recherche comme vendant les produits de cette marque.
+
 ### Horaires
 
 Colonne `horaires`, en texte libre, une ligne ou un segment par groupe de jours (séparateurs `;`, `|` ou retour à la ligne) :

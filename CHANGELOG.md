@@ -27,6 +27,9 @@
 - Liste latérale défilant verticalement ; plus de saut de mise en page au survol des suggestions.
 
 ### Expérience utilisateur
+- « Rechercher dans cette zone » quand le visiteur déplace ou zoome la carte, et « Voir plus de points de vente » sous la liste.
+- Le navigateur mémorise la dernière recherche (réaffichée au retour sur la page, pendant 30 jours) et l'application d'itinéraire choisie (proposée en premier).
+- Plus de message « Recherche en cours… » pendant la saisie.
 - Palette strictement noir / blanc / gris : boutons, filtres, marqueurs (blancs sur fond sombre, noirs sur fond clair). Le fond de carte garde ses couleurs d'origine. Les réglages de couleur ont été retirés.
 - Grande carte plein cadre avec la liste des magasins superposée à gauche (repliable). Survol lié : survoler une fiche met son marqueur en avant, survoler un marqueur met sa fiche en avant.
 - Fiches hiérarchisées : enseigne en petites capitales, nom du magasin en titre, adresse, état « Ouvert / Fermé », téléphone, alignées à gauche.
@@ -45,6 +48,7 @@
 - Accessibilité : libellé, combobox ARIA avec navigation au clavier (flèches, Entrée, Échap), annonces de statut, vrais liens « J'Y VAIS ».
 
 ### Administration
+- Alerte par e-mail si la synchronisation automatique échoue (au plus une par jour), adresse réglable.
 - Synchronisation Google Sheets (bouton et tâche quotidienne, avec garde-fou si la feuille est tronquée).
 - Rapport d'import avant validation : lignes ignorées et raison, doublons, codes postaux manquants.
 - Géocodage automatique des magasins français sans coordonnées (service public IGN).
@@ -52,6 +56,7 @@
 - Fonctions préfixées `novi_sl_`.
 
 ### Référencement
+- Chaque revendeur est déclaré comme vendant les produits de la marque (`makesOffer` → `Brand`, réglage « Marque vendue ») pour répondre à « où acheter Les Senteurs Gourmandes ».
 - Une URL indexable par magasin, rendue côté serveur avec titre, description, canonique et données structurées `Store` (horaires, téléphone, enseigne) ; ajout au plan du site (WordPress, Yoast SEO) ; compatibilité Yoast SEO et Rank Math ; redirection 301 des identifiants inconnus.
 - Colonne `horaires` (texte libre interprété) et mise en forme automatique des noms en majuscules et des téléphones.
 - Données structurées JSON-LD (`schema.org/Store`) sur la page du store locator (désactivables).

@@ -135,6 +135,9 @@ novi_sl_assert( 'boutique' === $r['stores'][0]['slug'] && 'Mardi-Samedi 10h-19h'
 $desc = novi_sl_store_seo_description( array( 'name' => 'BEAUTY SUCCESS PESSAC', 'brand' => '', 'address1' => '1 av. Eiffel', 'address2' => '', 'postcode' => '33600', 'city' => 'PESSAC', 'country' => 'France', 'hours_text' => 'Lun-Sam 9h-19h', 'phone' => '0556000000' ) );
 novi_sl_assert( false !== strpos( $desc, '33600 Pessac' ) && false !== strpos( $desc, 'Lun-Sam 9h-19h' ) && false !== strpos( $desc, '05 56 00 00 00' ), 'description SEO de la fiche (adresse, horaires, téléphone)' );
 
+$schema = novi_sl_store_schema( array( 'name' => 'BEAUTY SUCCESS PESSAC', 'brand' => '', 'slug' => 'beauty-success-pessac', 'address1' => '1 av. Eiffel', 'address2' => '', 'postcode' => '33600', 'city' => 'PESSAC', 'country' => 'France', 'lat' => 44.78, 'lng' => -0.63, 'phone' => '', 'website' => '', 'icone' => '' ) );
+novi_sl_assert( isset( $schema['makesOffer']['itemOffered']['brand']['name'] ) && novi_sl_own_brand() === $schema['makesOffer']['itemOffered']['brand']['name'] && 'Beauty Success' === $schema['brand']['name'], 'données structurées : le revendeur vend la marque « ' . novi_sl_own_brand() . ' »' );
+
 echo "Géocodage (réponse simulée)\n";
 novi_sl_mock_http( 200, wp_json_encode( array( 'features' => array( array( 'geometry' => array( 'coordinates' => array( 6.1294, 45.8992 ) ), 'properties' => array( 'score' => 0.92 ) ) ) ) ) );
 $r = novi_sl_import_csv( novi_sl_csv( array( array( '9', '1', 'Annecy test ' . wp_generate_password( 6, false ), 'Annecy', '74000', '1 rue Royale ' . wp_rand(), '', '', 'France', '' ) ) ), true );
@@ -150,6 +153,22 @@ novi_sl_cron_sync();
 $status = get_option( 'novi_sl_sync_status' );
 novi_sl_assert( ! $status['ok'] && false !== strpos( $status['message'], 'bloquée par sécurité' ), 'feuille tronquée : synchronisation bloquée' );
 
+$GLOBALS['novi_sl_mails'] = array();
+add_filter(
+	'pre_wp_mail',
+	function ( $null, $atts ) {
+		$GLOBALS['novi_sl_mails'][] = $atts;
+		return true;
+	},
+	10,
+	2
+);
+delete_option( 'novi_sl_last_alert' );
+update_option( NOVI_SL_OPTION, array_merge( novi_sl_get_settings(), array( 'alert_email' => 'alerte@example.com' ) ) );
+novi_sl_mock_http( 403, 'Forbidden' );
+novi_sl_cron_sync();
+novi_sl_cron_sync();
+novi_sl_assert( 1 === count( $GLOBALS['novi_sl_mails'] ) && 'alerte@example.com' === $GLOBALS['novi_sl_mails'][0]['to'] && false !== strpos( $GLOBALS['novi_sl_mails'][0]['message'], 'partagée' ), 'échec : une seule alerte e-mail par jour, avec la raison' );
 novi_sl_mock_http( 403, 'Forbidden' );
 novi_sl_cron_sync();
 $status = get_option( 'novi_sl_sync_status' );

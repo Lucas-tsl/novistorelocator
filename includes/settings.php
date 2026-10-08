@@ -22,6 +22,8 @@ function novi_sl_default_settings() {
 		'sheet_url'     => '',
 		'sync_auto'     => 0,
 		'jsonld'        => 1,
+		'own_brand'     => 'Les Senteurs Gourmandes',
+		'alert_email'   => 'lucas.troteseil@groupe-novi.com',
 		'theme'         => 'light',
 		'filters'       => 1,
 		'brands'        => "Beauty Success\nGaleries Lafayette\nSo Cut\nBHV",
@@ -79,6 +81,15 @@ function novi_sl_sanitize_settings( $input ) {
 
 	$clean['sync_auto'] = ! empty( $input['sync_auto'] ) && '' !== $clean['sheet_url'] ? 1 : 0;
 	$clean['jsonld']    = ! empty( $input['jsonld'] ) ? 1 : 0;
+	$clean['own_brand'] = isset( $input['own_brand'] ) ? sanitize_text_field( $input['own_brand'] ) : $current['own_brand'];
+
+	$clean['alert_email'] = '';
+	if ( ! empty( $input['alert_email'] ) ) {
+		$clean['alert_email'] = (string) sanitize_email( $input['alert_email'] );
+		if ( '' === $clean['alert_email'] && function_exists( 'add_settings_error' ) ) {
+			add_settings_error( NOVI_SL_OPTION, 'novi_sl_alert_email', 'L\'adresse e-mail d\'alerte n\'est pas valide.' );
+		}
+	}
 	$clean['filters']   = ! empty( $input['filters'] ) ? 1 : 0;
 	$brands             = isset( $input['brands'] ) ? preg_split( '/\r\n|\r|\n/', (string) $input['brands'] ) : array();
 	$brands             = array_slice( array_values( array_unique( array_filter( array_map( 'sanitize_text_field', $brands ) ) ) ), 0, 30 );

@@ -427,6 +427,58 @@
 	list-style: none;
 }
 
+/* ---------- « Voir plus » et « Rechercher dans cette zone » ---------- */
+
+.novi-sl .novi-sl__more-results {
+	display: flex;
+	width: calc(100% - 32px);
+	margin: 8px 16px 16px;
+}
+
+.novi-sl__area {
+	position: absolute;
+	z-index: 3;
+	top: 16px;
+	left: 50%;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 18px;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--novi-sl-text);
+	background: var(--novi-sl-surface);
+	border: 1px solid var(--novi-sl-border);
+	border-radius: 50px;
+	box-shadow: var(--novi-sl-shadow);
+	cursor: pointer;
+	white-space: nowrap;
+	transform: translateX(-50%);
+	animation: novi-sl-drop-center 0.25s var(--novi-sl-ease);
+	transition: border-color 0.2s;
+}
+
+.novi-sl__area:hover {
+	border-color: var(--novi-sl-text);
+}
+
+/* Centré sur la partie visible de la carte, à droite de la liste. */
+.novi-sl:not(.is-panel-collapsed) .novi-sl__area {
+	left: calc((100% + min(380px, 42%) + 16px) / 2);
+}
+
+@keyframes novi-sl-drop-center {
+	from {
+		opacity: 0;
+		transform: translate(-50%, -6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(-50%);
+	}
+}
+
 /* ---------- Fiches (typographie hiérarchisée) ---------- */
 
 .novi-sl__card {
@@ -1097,6 +1149,16 @@
 		padding: 16px 4px 16px 14px;
 	}
 
+	.novi-sl:not(.is-panel-collapsed) .novi-sl__area {
+		left: 50%;
+	}
+
+	.novi-sl .novi-sl__more-results {
+		width: 100%;
+		margin: 12px 0 0;
+	}
+
+	.novi-sl[data-view="list"] .novi-sl__area,
 	.novi-sl[data-view="list"] .novi-sl__map,
 	.novi-sl[data-view="map"] .novi-sl__panel {
 		display: none;

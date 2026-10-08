@@ -113,7 +113,7 @@ function novi_sl_store_seo_description( array $store ) {
 	if ( ! empty( $store['phone'] ) ) {
 		$parts[] = 'Tél. ' . novi_sl_format_phone( $store['phone'] ) . '.';
 	}
-	$parts[] = 'Itinéraire et point de vente ' . get_bloginfo( 'name' ) . '.';
+	$parts[] = 'Revendeur ' . novi_sl_own_brand() . ' : itinéraire et informations pratiques.';
 	return wp_html_excerpt( implode( ' ', $parts ), 300, '…' );
 }
 

@@ -5,7 +5,7 @@
  * Version:           1.4.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
- * Author:            Lucas DUVERNEUIL
+ * Author:            Troteseil Lucas
  * Text Domain:       novi-storelocator
  */
 

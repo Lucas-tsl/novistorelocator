@@ -454,17 +454,44 @@
 	}
 
 	/* ------------------------------------------------------------------
+	 * Mémoire du navigateur : dernière recherche, application d'itinéraire
+	 * (stockage local du visiteur, sans effet si le navigateur le refuse)
+	 * ---------------------------------------------------------------- */
+
+	var memory = {
+		get: function (key) {
+			try {
+				return JSON.parse(window.localStorage.getItem('novi-sl:' + key));
+			} catch (e) {
+				return null;
+			}
+		},
+		set: function (key, value) {
+			try {
+				window.localStorage.setItem('novi-sl:' + key, JSON.stringify(value));
+			} catch (e) {
+				// Navigation privée ou stockage bloqué : on s'en passe.
+			}
+		}
+	};
+
+	/* ------------------------------------------------------------------
 	 * Contenus : itinéraire, fiche, popup, fenêtre de détail
 	 * ---------------------------------------------------------------- */
 
+	/** Liens d'itinéraire ; l'application choisie la dernière fois est proposée en premier. */
 	function directionsLinks(store, origin) {
 		var dest = store.lat + ',' + store.lng;
 		var from = origin ? origin.lat + ',' + origin.lng : '';
-		return [
+		var preferred = memory.get('app');
+		var links = [
 			{ key: 'google', label: 'Google Maps', url: 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dest) + (from ? '&origin=' + encodeURIComponent(from) : '') },
 			{ key: 'apple', label: 'Apple Plans', url: 'https://maps.apple.com/?daddr=' + encodeURIComponent(dest) + '&dirflg=d' + (from ? '&saddr=' + encodeURIComponent(from) : '') },
 			{ key: 'waze', label: 'Waze', url: 'https://waze.com/ul?ll=' + encodeURIComponent(dest) + '&navigate=yes' }
 		];
+		return links.sort(function (a, b) {
+			return (b.key === preferred) - (a.key === preferred);
+		});
 	}
 
 	/** Bouton « J'Y VAIS » qui déplie le choix de l'application d'itinéraire. */
@@ -482,6 +509,9 @@
 			link.target = '_blank';
 			link.rel = 'noopener';
 			link.setAttribute('aria-label', 'Itinéraire vers ' + store.title + ' avec ' + app.label + ' (nouvel onglet)');
+			link.addEventListener('click', function () {
+				memory.set('app', app.key);
+			});
 			menu.appendChild(link);
 		});
 		details.appendChild(menu);
@@ -543,6 +573,9 @@
 		this.userInteracted = false;
 		this.searchToken = 0;
 		this.historyPushed = false;
+		this.moving = false;
+		this.resultPool = [];
+		this.shown = [];
 
 		this.initMap();
 		this.bindPanel();
@@ -550,6 +583,8 @@
 		this.bindLocate();
 		this.bindViews();
 		this.bindModal();
+		this.bindArea();
+		this.bindMore();
 		this.loadMarkers();
 	}
 
@@ -645,11 +680,32 @@
 	};
 
 	/** Centre la carte sur un point en tenant compte de la liste superposée. */
+	/** Déplacement de la carte décidé par le store locator (et non par le visiteur). */
+	StoreLocator.prototype.autoMove = function (fn) {
+		var self = this;
+		this.moving = true;
+		clearTimeout(this.movingTimer);
+		var done = function () {
+			clearTimeout(self.movingTimer);
+			self.movingTimer = setTimeout(function () {
+				self.moving = false;
+			}, 400);
+		};
+		this.map.once('moveend', done);
+		this.movingTimer = setTimeout(function () {
+			self.moving = false;
+		}, 2500);
+		fn();
+	};
+
 	StoreLocator.prototype.centerOn = function (latlng, zoom) {
 		var pad = this.mapPadding();
 		var offset = (pad.paddingTopLeft[0] - pad.paddingBottomRight[0]) / 2;
 		var point = this.map.project(latlng, zoom).subtract([offset, 0]);
-		this.map.setView(this.map.unproject(point, zoom), zoom, { animate: !prefersReducedMotion() });
+		var map = this.map;
+		this.autoMove(function () {
+			map.setView(map.unproject(point, zoom), zoom, { animate: !prefersReducedMotion() });
+		});
 	};
 
 	/* ---------- Liste superposée ---------- */
@@ -699,7 +755,11 @@
 		if (view === 'map') {
 			this.map.invalidateSize();
 			if (this.pendingBounds) {
-				this.map.fitBounds(this.pendingBounds, { padding: [40, 40], maxZoom: FOCUS_ZOOM, animate: false });
+				var map = this.map;
+				var pending = this.pendingBounds;
+				this.autoMove(function () {
+					map.fitBounds(pending, { padding: [40, 40], maxZoom: FOCUS_ZOOM, animate: false });
+				});
 				this.pendingBounds = null;
 			}
 		}
@@ -822,7 +882,9 @@
 		});
 		this.cluster.clearLayers();
 		this.cluster.addLayers(visible);
-		if (this.lastSearch) {
+		if (this.lastSearch && this.lastSearch.options.area) {
+			this.searchArea();
+		} else if (this.lastSearch) {
 			this.showNearest(this.lastSearch.lat, this.lastSearch.lng, this.lastSearch.options, true);
 		} else if (!visible.length) {
 			this.setStatus('Aucun point de vente ne correspond à ces filtres.', true);
@@ -867,6 +929,7 @@
 				self.cluster.addLayers(self.markers);
 				self.renderFilters();
 				self.openFromUrl(true);
+				self.restoreLastSearch();
 			})
 			.catch(function (error) {
 				self.setStatus('Impossible de charger la liste des points de vente. Veuillez réessayer plus tard.', true);
@@ -990,7 +1053,11 @@
 		var self = this;
 		var cluster = this.cluster;
 		var open = function () {
+			self.moving = true;
 			cluster.zoomToShowLayer(marker, function () {
+				setTimeout(function () {
+					self.moving = false;
+				}, 400);
 				self.setActive(store.index, false);
 				if (withPopup !== false) {
 					marker.openPopup();
@@ -1005,12 +1072,49 @@
 		this.centerOn(marker.getLatLng(), zoom);
 	};
 
+	/* ---------- Dernière recherche ---------- */
+
+	StoreLocator.prototype.rememberSearch = function (entry) {
+		entry.t = Date.now();
+		entry.input = this.input.value;
+		memory.set('last', entry);
+	};
+
+	/** Au retour sur la page, réaffiche la dernière recherche (sauf si la position est déjà autorisée). */
+	StoreLocator.prototype.restoreLastSearch = function () {
+		var self = this;
+		var last = memory.get('last');
+		if (!last || typeof last.lat !== 'number' || Date.now() - (last.t || 0) > 30 * 24 * 3600 * 1000) {
+			return;
+		}
+		if (new URL(window.location.href).searchParams.get(this.queryVar)) {
+			return; // Une fiche est ouverte depuis son lien.
+		}
+		var run = function () {
+			if (self.userInteracted || self.lastSearch) {
+				return;
+			}
+			self.input.value = last.input || last.label;
+			self.showNearest(last.lat, last.lng, { label: last.label, postcode: last.postcode || '', restored: true });
+		};
+		if (navigator.permissions && navigator.permissions.query) {
+			navigator.permissions.query({ name: 'geolocation' }).then(function (p) {
+				if (p.state !== 'granted') {
+					run();
+				}
+			}).catch(run);
+		} else {
+			run();
+		}
+	};
+
 	/* ---------- Résultats ---------- */
 
 	StoreLocator.prototype.showNearest = function (lat, lng, options, fromFilter) {
 		var self = this;
 		options = options || {};
 		this.lastSearch = { lat: lat, lng: lng, options: options };
+		this.hideArea();
 		return loadStores().then(function (stores) {
 			if (!stores.length) {
 				self.setStatus('Aucun point de vente n\'est disponible pour le moment.', true);
@@ -1042,6 +1146,7 @@
 				});
 			}
 
+			self.resultPool = ranked;
 			self.renderResults(list);
 			self.updateListCount(list.length);
 			if (isMobile() && !fromFilter) {
@@ -1058,27 +1163,34 @@
 					self.pendingBounds = bounds;
 				} else {
 					var pad = self.mapPadding();
-					self.map.fitBounds(bounds, { paddingTopLeft: pad.paddingTopLeft, paddingBottomRight: pad.paddingBottomRight, maxZoom: FOCUS_ZOOM, animate: !prefersReducedMotion() });
+					self.autoMove(function () {
+						self.map.fitBounds(bounds, { paddingTopLeft: pad.paddingTopLeft, paddingBottomRight: pad.paddingBottomRight, maxZoom: FOCUS_ZOOM, animate: !prefersReducedMotion() });
+					});
 				}
 			}
 
 			var count = list.length;
-			self.setStatus(
-				(count > 1 ? 'Les ' + count + ' points de vente les plus proches de ' : 'Le point de vente le plus proche de ') +
-				options.label + ' (le premier à ' + formatDistance(list[0].distance) + ').'
-			);
+			var text = (count > 1 ? 'Les ' + count + ' points de vente les plus proches de ' : 'Le point de vente le plus proche de ') +
+				options.label + ' (le premier à ' + formatDistance(list[0].distance) + ').';
+			self.setStatus(options.restored ? 'Votre dernière recherche : ' + text.charAt(0).toLowerCase() + text.slice(1) : text);
 		}).catch(function () {
 			self.setStatus('Impossible de charger la liste des points de vente. Veuillez réessayer plus tard.', true);
 		});
 	};
 
 	StoreLocator.prototype.renderResults = function (list) {
-		var self = this;
 		this.resultsEl.textContent = '';
 		this.emptyEl.hidden = list.length > 0;
 		this.activeIndexStore = null;
+		this.shown = [];
+		this.appendResults(list);
+		this.panel.scrollTop = 0;
+	};
 
+	StoreLocator.prototype.appendResults = function (list) {
+		var self = this;
 		list.forEach(function (r, i) {
+			self.shown.push(r.store.index);
 			var store = r.store;
 			var card = el('li', 'novi-sl__card');
 			card.setAttribute('data-index', String(store.index));
@@ -1137,7 +1249,107 @@
 			});
 			self.resultsEl.appendChild(card);
 		});
-		this.panel.scrollTop = 0;
+		this.updateMore();
+	};
+
+	/* ---------- « Voir plus » ---------- */
+
+	StoreLocator.prototype.bindMore = function () {
+		var self = this;
+		this.moreBtn = el('button', 'novi-sl__btn novi-sl__btn--ghost novi-sl__more-results', 'Voir plus de points de vente');
+		this.moreBtn.type = 'button';
+		this.moreBtn.hidden = true;
+		this.resultsEl.insertAdjacentElement('afterend', this.moreBtn);
+		this.moreBtn.addEventListener('click', function () {
+			var next = self.resultPool.filter(function (r) {
+				return self.shown.indexOf(r.store.index) === -1;
+			}).slice(0, self.resultsCount);
+			if (!next.length) {
+				return;
+			}
+			var first = self.resultsEl.children.length;
+			self.appendResults(next);
+			self.updateListCount(self.shown.length);
+			self.setStatus(self.shown.length + ' points de vente affichés.');
+			var card = self.resultsEl.children[first];
+			if (card) {
+				var button = card.querySelector('.novi-sl__card-title');
+				if (button) {
+					button.focus({ preventScroll: true });
+				}
+				if (self.panel.scrollHeight > self.panel.clientHeight + 1) {
+					self.panel.scrollTo({ top: card.offsetTop - 12, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+				}
+			}
+		});
+	};
+
+	StoreLocator.prototype.updateMore = function () {
+		var self = this;
+		var remaining = this.resultPool.some(function (r) {
+			return self.shown.indexOf(r.store.index) === -1;
+		});
+		this.moreBtn.hidden = !remaining || !this.shown.length;
+	};
+
+	/* ---------- « Rechercher dans cette zone » ---------- */
+
+	StoreLocator.prototype.bindArea = function () {
+		var self = this;
+		var body = this.root.querySelector('.novi-sl__body');
+		this.areaBtn = el('button', 'novi-sl__area');
+		this.areaBtn.type = 'button';
+		this.areaBtn.hidden = true;
+		this.areaBtn.innerHTML = '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z"/></svg>';
+		this.areaBtn.appendChild(document.createTextNode('Rechercher dans cette zone'));
+		body.appendChild(this.areaBtn);
+		this.areaBtn.addEventListener('click', function () {
+			self.searchArea();
+		});
+		var show = function () {
+			if (!self.moving && self.stores.length) {
+				self.areaBtn.hidden = false;
+			}
+		};
+		this.map.on('dragend', show);
+		this.map.on('zoomend', show);
+	};
+
+	StoreLocator.prototype.hideArea = function () {
+		if (this.areaBtn) {
+			this.areaBtn.hidden = true;
+		}
+	};
+
+	/** Magasins visibles à l'écran, du plus proche au plus éloigné du centre de la carte. */
+	StoreLocator.prototype.searchArea = function () {
+		var self = this;
+		var bounds = this.map.getBounds();
+		var center = this.map.getCenter();
+		this.hideArea();
+		this.lastSearch = { lat: center.lat, lng: center.lng, options: { label: 'cette zone', area: true } };
+		var ranked = this.stores
+			.filter(function (s) {
+				return self.matches(s) && bounds.contains([s.lat, s.lng]);
+			})
+			.map(function (s) {
+				return { store: s, distance: distanceKm(center.lat, center.lng, s.lat, s.lng) };
+			})
+			.sort(function (a, b) {
+				return a.distance - b.distance;
+			});
+		this.resultPool = ranked;
+		var list = ranked.slice(0, Math.max(this.resultsCount, 8));
+		this.renderResults(list);
+		this.updateListCount(list.length);
+		if (!ranked.length) {
+			this.setStatus('Aucun point de vente dans cette zone. Dézoomez ou déplacez la carte.', true);
+			return;
+		}
+		this.setStatus(ranked.length + (ranked.length > 1 ? ' points de vente dans cette zone.' : ' point de vente dans cette zone.'));
+		if (this.root.classList.contains('is-panel-collapsed')) {
+			this.panelOpen.click();
+		}
 	};
 
 	/* ---------- Fenêtre de détail (fiche magasin, URL propre) ---------- */
@@ -1455,13 +1667,8 @@
 			return;
 		}
 
-		var pending = setTimeout(function () {
-			self.renderMessage('Recherche en cours…');
-		}, 150);
-
 		Promise.all([loadCommunes(), loadStores()])
 			.then(function (data) {
-				clearTimeout(pending);
 				if (token !== self.searchToken) {
 					return; // Une saisie plus récente a pris le relais.
 				}
@@ -1473,7 +1680,6 @@
 				self.renderSuggestions();
 			})
 			.catch(function () {
-				clearTimeout(pending);
 				self.renderMessage('La recherche est momentanément indisponible.');
 			});
 	};
@@ -1557,10 +1763,12 @@
 			var label = p.name + (suggestion.viaL5 && p.l5 ? ' (' + p.l5 + ')' : '');
 			this.input.value = label + ' ' + p.cp;
 			this.showNearest(p.lat, p.lng, { label: label, postcode: p.cp });
+			this.rememberSearch({ label: label, lat: p.lat, lng: p.lng, postcode: p.cp });
 		} else {
 			var store = suggestion.store;
 			var self = this;
 			this.input.value = store.name;
+			this.rememberSearch({ label: store.name, lat: store.lat, lng: store.lng });
 			this.showNearest(store.lat, store.lng, { label: store.name, focusStore: true }).then(function () {
 				self.focusStore(store);
 			});

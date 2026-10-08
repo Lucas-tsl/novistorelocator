@@ -324,6 +324,20 @@ function novi_sl_store_schema( array $store ) {
 		),
 		'hasMap'  => novi_sl_directions_url( $store ),
 	);
+	$own_brand = novi_sl_own_brand();
+	if ( $own_brand ) {
+		// Le revendeur vend les produits de la marque : « où acheter <marque> ».
+		$item['makesOffer'] = array(
+			'@type'        => 'Offer',
+			'availability' => 'https://schema.org/InStoreOnly',
+			'itemOffered'  => array(
+				'@type'    => 'Product',
+				'name'     => 'Parfums ' . $own_brand,
+				'category' => 'Parfums',
+				'brand'    => novi_sl_own_brand_schema(),
+			),
+		);
+	}
 	$url = isset( $store['slug'] ) ? novi_sl_store_url( $store ) : '';
 	if ( $url ) {
 		$item['@id'] = $url . '#magasin';
@@ -373,6 +387,29 @@ function novi_sl_jsonld_script( array $data ) {
 }
 
 /**
+ * Marque vendue par les revendeurs (réglage « Marque vendue », nom du site par défaut).
+ *
+ * @return string
+ */
+function novi_sl_own_brand() {
+	$settings = novi_sl_get_settings();
+	return '' !== trim( (string) $settings['own_brand'] ) ? trim( $settings['own_brand'] ) : wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+}
+
+/**
+ * Description schema.org de la marque vendue.
+ *
+ * @return array
+ */
+function novi_sl_own_brand_schema() {
+	return array(
+		'@type' => 'Brand',
+		'name'  => novi_sl_own_brand(),
+		'url'   => home_url( '/' ),
+	);
+}
+
+/**
  * Données structurées de tous les magasins (page du store locator).
  *
  * @return string
@@ -394,7 +431,8 @@ function novi_sl_jsonld() {
 		array(
 			'@context'        => 'https://schema.org',
 			'@type'           => 'ItemList',
-			'name'            => 'Points de vente',
+			'name'            => 'Points de vente ' . novi_sl_own_brand(),
+			'about'           => novi_sl_own_brand_schema(),
 			'numberOfItems'   => count( $items ),
 			'itemListElement' => $items,
 		)

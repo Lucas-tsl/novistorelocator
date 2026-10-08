@@ -595,6 +595,13 @@ function novi_sl_render_settings_page() {
 						<p class="description">Par sécurité, la mise à jour automatique est bloquée si la feuille contient moins de la moitié des magasins actuellement en ligne.</p>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row"><label for="novi-sl-alert">E-mail d'alerte</label></th>
+					<td>
+						<input type="email" id="novi-sl-alert" class="regular-text" name="<?php echo esc_attr( $name ); ?>[alert_email]" value="<?php echo esc_attr( $s['alert_email'] ); ?>">
+						<p class="description">Prévenu si la synchronisation automatique échoue (feuille inaccessible, colonnes modifiées, feuille vidée…). Au plus un e-mail par jour. Laisser vide pour ne pas être alerté.</p>
+					</td>
+				</tr>
 			</table>
 
 			<h2 class="title">Référencement</h2>
@@ -602,6 +609,13 @@ function novi_sl_render_settings_page() {
 				<tr>
 					<th scope="row">Données structurées</th>
 					<td><label><input type="checkbox" name="<?php echo esc_attr( $name ); ?>[jsonld]" value="1" <?php checked( $s['jsonld'] ); ?>> Décrire les magasins aux moteurs de recherche (JSON-LD schema.org/Store) sur la page du store locator</label></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="novi-sl-own-brand">Marque vendue</label></th>
+					<td>
+						<input type="text" id="novi-sl-own-brand" class="regular-text" name="<?php echo esc_attr( $name ); ?>[own_brand]" value="<?php echo esc_attr( $s['own_brand'] ); ?>">
+						<p class="description">Chaque revendeur est déclaré aux moteurs de recherche comme vendant les produits de cette marque (offre schema.org) : c'est ce qui permet de répondre à « où acheter <?php echo esc_html( $s['own_brand'] ? $s['own_brand'] : 'la marque' ); ?> près de chez moi ».</p>
+					</td>
 				</tr>
 			</table>
 
