@@ -286,9 +286,9 @@ function novi_sl_handle_export() {
 
 	$out = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 	fwrite( $out, "\xEF\xBB\xBF" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- BOM pour Excel.
-	fputcsv( $out, array( 'id_store', 'active', 'name', 'city', 'postcode', 'address1', 'latitude', 'longitude', 'phone', 'address2', 'country', 'icone', 'website' ), ',', '"', '' );
+	fputcsv( $out, array( 'id_store', 'active', 'name', 'city', 'postcode', 'address1', 'latitude', 'longitude', 'phone', 'address2', 'country', 'icone', 'website', 'enseigne', 'services' ), ',', '"', '' );
 	foreach ( novi_sl_get_stores() as $s ) {
-		fputcsv( $out, array( $s['id'], '1', $s['name'], $s['city'], $s['postcode'], $s['address1'], $s['lat'], $s['lng'], $s['phone'], $s['address2'], $s['country'], $s['icone'], isset( $s['website'] ) ? $s['website'] : '' ), ',', '"', '' );
+		fputcsv( $out, array( $s['id'], '1', $s['name'], $s['city'], $s['postcode'], $s['address1'], $s['lat'], $s['lng'], $s['phone'], $s['address2'], $s['country'], $s['icone'], isset( $s['website'] ) ? $s['website'] : '', isset( $s['brand'] ) ? $s['brand'] : '', isset( $s['services'] ) ? implode( ', ', (array) $s['services'] ) : '' ), ',', '"', '' );
 	}
 	fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 	exit;
@@ -399,7 +399,7 @@ function novi_sl_render_stores_page() {
 					<li>Choisissez ce fichier ci-dessous puis cliquez sur « Analyser le fichier ».</li>
 					<li>Vérifiez le rapport, puis validez la mise en ligne.</li>
 				</ol>
-				<p class="description">Colonnes reconnues : id_store, active, name, address1, address2, postcode, city, country, phone, website, latitude, longitude, icone (valeurs « signature » ou « rouge »). Si la latitude/longitude d'un magasin français est vide, elle est calculée à partir de l'adresse.</p>
+				<p class="description">Colonnes reconnues : id_store, active, name, address1, address2, postcode, city, country, phone, website, latitude, longitude, icone (valeurs « signature » ou « rouge »), enseigne, services (séparés par des virgules). Si la latitude/longitude d'un magasin français est vide, elle est calculée à partir de l'adresse.</p>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
 					<input type="hidden" name="action" value="novi_sl_upload">
 					<?php wp_nonce_field( 'novi_sl_upload' ); ?>
@@ -570,6 +570,21 @@ function novi_sl_render_settings_page() {
 				<tr>
 					<th scope="row"><label for="novi-sl-results">Magasins affichés après une recherche</label></th>
 					<td><input type="number" id="novi-sl-results" min="1" max="20" class="small-text" name="<?php echo esc_attr( $name ); ?>[results_count]" value="<?php echo (int) $s['results_count']; ?>"></td>
+				</tr>
+			</table>
+
+			<h2 class="title">Filtres</h2>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row">Filtres par enseigne et service</th>
+					<td><label><input type="checkbox" name="<?php echo esc_attr( $name ); ?>[filters]" value="1" <?php checked( $s['filters'] ); ?>> Afficher les filtres au-dessus de la carte</label></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="novi-sl-brands">Enseignes</label></th>
+					<td>
+						<textarea id="novi-sl-brands" class="large-text" rows="5" name="<?php echo esc_attr( $name ); ?>[brands]"><?php echo esc_textarea( $s['brands'] ); ?></textarea>
+						<p class="description">Une enseigne par ligne. Un magasin dont le nom commence par une enseigne lui est rattaché (ex. « BEAUTY SUCCESS PESSAC » → Beauty Success). Les autres sont regroupés dans « Autres ». Une colonne <code>enseigne</code> dans le fichier est prioritaire. Les services viennent de la colonne <code>services</code> (séparés par des virgules) et de l'icône « signature » (Soins en institut).</p>
+					</td>
 				</tr>
 			</table>
 

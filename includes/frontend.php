@@ -106,8 +106,11 @@ function novi_sl_front_config() {
 			'rouge'     => '#d63638',
 		),
 		'labels'       => array(
-			'signature' => 'Soins en institut',
+			'signature'  => 'Soins en institut',
+			'otherBrand' => 'Autres',
 		),
+		'filters'      => (bool) $s['filters'],
+		'brands'       => array_values( array_filter( array_map( 'trim', explode( "\n", (string) $s['brands'] ) ) ) ),
 		'resultsCount' => (int) $s['results_count'],
 	);
 }
@@ -160,7 +163,12 @@ function novi_sl_shortcode( $atts ) {
 					<span>Autour de moi</span>
 				</button>
 			</div>
+			<div class="novi-sl__views" role="group" aria-label="Affichage">
+				<button type="button" class="novi-sl__view" data-view="map" aria-pressed="true">Carte</button>
+				<button type="button" class="novi-sl__view" data-view="list" aria-pressed="false">Liste</button>
+			</div>
 		</div>
+		<div class="novi-sl__filters" role="group" aria-label="Filtrer les points de vente" hidden></div>
 		<p class="novi-sl__status" role="status" aria-live="polite"></p>
 		<div class="novi-sl__body">
 			<div class="novi-sl__map" role="region" aria-label="Carte des points de vente"></div>

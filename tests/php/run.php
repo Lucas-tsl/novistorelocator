@@ -108,6 +108,10 @@ novi_sl_assert( false !== strpos( $r['issues'][0]['message'] . $r['issues'][1]['
 
 $r = novi_sl_import_csv( "name;latitude;longitude\n<b>Été</b>;48,1;2,1\n", false );
 novi_sl_assert( 1 === count( $r['stores'] ) && 'Été' === $r['stores'][0]['name'], 'séparateur point-virgule et balises HTML retirées' );
+$r = novi_sl_import_csv( "name,latitude,longitude,enseigne,services\nInstitut Rose,48.1,2.1,Partenaire,\"Soins visage, Épilation ; Soins visage\"\n", false );
+novi_sl_assert( 'Partenaire' === $r['stores'][0]['brand'] && array( 'Soins visage', 'Épilation' ) === $r['stores'][0]['services'], 'colonnes enseigne et services lues (doublons retirés)' );
+$clean = novi_sl_sanitize_settings( array( 'brands' => "Beauty Success\r\n<b>So Cut</b>\n\nBeauty Success" ) );
+novi_sl_assert( "Beauty Success\nSo Cut" === $clean['brands'], 'liste des enseignes nettoyée' );
 $r = novi_sl_import_csv( "<!DOCTYPE html><html>Connexion Google</html>", false );
 novi_sl_assert( false !== strpos( $r['fatal'], 'page web' ), 'page de connexion Google détectée' );
 $r = novi_sl_import_csv( "ville,cp\nParis,75001\n", false );

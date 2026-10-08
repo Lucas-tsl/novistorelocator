@@ -75,8 +75,21 @@ const input = `${root} .novi-sl__input`;
 	check(cards >= 4, `${cards} magasins listés après la recherche`);
 	check(/km|m\b/.test(await page.locator(`${root} .novi-sl__distance`).first().innerText()), 'distance affichée sur chaque fiche');
 	check(/plus proches de Lyon/.test(await page.locator(`${root} .novi-sl__status`).innerText()), 'message de statut annoncé');
-	const href = await page.locator(`${root} .novi-sl__card .novi-sl__btn`).first().getAttribute('href');
-	check(/^https:\/\/www\.google\.com\/maps\/dir\/\?api=1&destination=/.test(href), '« J\'Y VAIS » est un vrai lien d\'itinéraire');
+	// « J'Y VAIS » : choix de l'application d'itinéraire.
+	const go = page.locator(`${root} .novi-sl__card .novi-sl__go`).first();
+	await go.locator('summary').click();
+	const links = await go.locator('.novi-sl__go-link').evaluateAll((as) => as.map((a) => a.textContent + ' ' + a.href));
+	check(links.length === 3 && /Google Maps https:\/\/www\.google\.com\/maps\/dir/.test(links[0]) && /Apple Plans https:\/\/maps\.apple\.com\/\?daddr=/.test(links[1]) && /Waze https:\/\/waze\.com\/ul\?ll=/.test(links[2]), '« J\'Y VAIS » propose Google Maps, Apple Plans et Waze');
+	await page.keyboard.press('Escape');
+	check(!(await go.evaluate((d) => d.open)), 'Échap referme le choix d\'application');
+
+	// Molette sans Ctrl : la carte ne zoome pas (la page défile).
+	const zoomBefore = await page.evaluate(() => document.querySelector('.novi-sl__map .leaflet-proxy').style.transform);
+	await page.mouse.move(500, 600);
+	await page.mouse.wheel(0, -400);
+	await page.waitForTimeout(600);
+	const zoomAfter = await page.evaluate(() => document.querySelector('.novi-sl__map .leaflet-proxy').style.transform);
+	check(zoomBefore === zoomAfter, 'molette sans Ctrl : pas de zoom involontaire de la carte');
 	await page.screenshot({ path: `${out}/1-recherche-lyon.png` });
 
 	// Clic sur une fiche : popup ouvert et fiche mise en évidence.
@@ -119,13 +132,47 @@ const input = `${root} .novi-sl__input`;
 	await context.close();
 }
 
+/* ---------------- Filtres ---------------- */
+{
+	const { page, errors, context } = await newPage({ width: 1280, height: 900 });
+	await page.waitForSelector(`${root} .novi-sl__chip`);
+	const chips = await page.locator(`${root} .novi-sl__chip`).allInnerTexts();
+	check(chips.length >= 3, `filtres affichés : ${chips.map((c) => c.replace(/\s+/g, ' ')).join(' | ')}`);
+	const brandChip = page.locator(`${root} .novi-sl__chip--brand`).nth(1);
+	const brand = (await brandChip.innerText()).replace(/\s*\d+$/, '').trim();
+	await page.fill(input, 'paris');
+	await page.locator(`${root} .novi-sl__suggestion--place`).first().click();
+	await page.waitForSelector(`${root} .novi-sl__card`);
+	await brandChip.click();
+	await page.waitForTimeout(400);
+	const names = await page.locator(`${root} .novi-sl__card-title`).allInnerTexts();
+	check(names.length > 0 && names.every((n) => n.toUpperCase().startsWith(brand.toUpperCase())), `filtre « ${brand} » : seules ses fiches restent (${names.length})`);
+	check(await brandChip.getAttribute('aria-pressed') === 'true', 'filtre actif signalé (aria-pressed)');
+	await page.locator(`${root} .novi-sl__chip--all`).click();
+	await page.waitForTimeout(300);
+	check(await page.locator(`${root} .novi-sl__chip--all`).getAttribute('aria-pressed') === 'true', '« Tous » réinitialise les filtres');
+	check(errors.length === 0, `aucune erreur JavaScript (filtres)${errors.length ? ' : ' + errors.join(' | ') : ''}`);
+	await context.close();
+}
+
 /* ---------------- Géolocalisation + mobile ---------------- */
 {
 	const { page, errors, context } = await newPage({ width: 390, height: 844 }, { latitude: 48.8566, longitude: 2.3522 });
 	// Permission déjà accordée : la position est utilisée sans clic.
 	await page.waitForSelector(`${root} .novi-sl__card`, { timeout: 8000 });
 	check(/votre position/.test(await page.locator(`${root} .novi-sl__status`).innerText()), 'géolocalisation déjà autorisée utilisée automatiquement');
-	check(/origin=48\.8566/.test(await page.locator(`${root} .novi-sl__card .novi-sl__btn`).first().getAttribute('href')), 'itinéraire depuis la position du visiteur');
+	check(/origin=48\.8566/.test(await page.locator(`${root} .novi-sl__card .novi-sl__go-link--google`).first().getAttribute('href')), 'itinéraire depuis la position du visiteur');
+	check(await page.locator(input).isVisible() && await page.locator(`${root} .novi-sl__results`).isVisible() && !(await page.locator(`${root} .novi-sl__map`).isVisible()), 'mobile : résultats affichés en vue Liste');
+	await page.locator(`${root} .novi-sl__view[data-view="map"]`).click();
+	check(await page.locator(`${root} .novi-sl__map`).isVisible() && !(await page.locator(`${root} .novi-sl__results`).isVisible()), 'mobile : bascule vers la vue Carte');
+	await page.locator(`${root} .novi-sl__view[data-view="list"]`).click();
+	await page.locator(`${root} .novi-sl__card-title`).nth(1).click();
+	await page.waitForSelector(`${root} .leaflet-popup .novi-sl-popup`, { timeout: 5000 });
+	check(await page.locator(`${root} .novi-sl__map`).isVisible(), 'mobile : un clic sur une fiche ouvre la carte sur le magasin');
+	check(/Liste \(\d+\)/.test(await page.locator(`${root} .novi-sl__view[data-view="list"]`).innerText()), 'mobile : nombre de résultats sur le bouton Liste');
+	await page.evaluate(() => window.scrollTo(0, 1200));
+	const searchTop = await page.locator(`${root} .novi-sl__search`).evaluate((e) => e.getBoundingClientRect().top);
+	check(searchTop >= -1 && searchTop < 5, `mobile : barre de recherche toujours visible en haut (${Math.round(searchTop)} px)`);
 	const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
 	check(!overflow, 'pas de défilement horizontal sur mobile');
 	await page.screenshot({ path: `${out}/3-mobile-geoloc.png`, fullPage: true });

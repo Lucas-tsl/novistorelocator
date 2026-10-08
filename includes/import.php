@@ -52,6 +52,11 @@ function novi_sl_header_aliases() {
 		'icone'        => 'icone',
 		'icon'         => 'icone',
 		'type'         => 'icone',
+		'enseigne'     => 'brand',
+		'brand'        => 'brand',
+		'marque'       => 'brand',
+		'services'     => 'services',
+		'service'      => 'services',
 	);
 }
 
@@ -244,6 +249,8 @@ function novi_sl_import_rows( array $rows, $geocode = true ) {
 			'lat'      => null,
 			'lng'      => null,
 			'icone'    => sanitize_key( isset( $row['icone'] ) ? $row['icone'] : '' ),
+			'brand'    => sanitize_text_field( isset( $row['brand'] ) ? $row['brand'] : '' ),
+			'services' => novi_sl_split_services( isset( $row['services'] ) ? $row['services'] : '' ),
 		);
 
 		$is_france = novi_sl_is_france( $store['country'] );
@@ -338,6 +345,18 @@ function novi_sl_import_csv( $content, $geocode = true ) {
 	);
 
 	return $result;
+}
+
+/**
+ * Découpe la colonne « services » (séparateurs : virgule, point-virgule, barre verticale).
+ *
+ * @param string|array $value Valeur brute.
+ * @return string[]
+ */
+function novi_sl_split_services( $value ) {
+	$parts = is_array( $value ) ? $value : preg_split( '/[,;|]/', (string) $value );
+	$parts = array_filter( array_map( 'sanitize_text_field', array_map( 'trim', (array) $parts ) ) );
+	return array_slice( array_values( array_unique( $parts ) ), 0, 10 );
 }
 
 /**

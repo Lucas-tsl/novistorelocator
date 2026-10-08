@@ -44,7 +44,9 @@ Points à vérifier juste après la mise à jour :
 
 ### Colonnes du CSV
 
-La première ligne doit contenir les noms de colonnes. Obligatoires : `name`, `latitude`, `longitude`. Reconnues : `id_store`, `active` (1/oui), `address1`, `address2`, `postcode`, `city`, `country`, `phone`, `website`, `icone` (`signature` = marqueur cuivré et mention « Soins en institut », `rouge` = marqueur rouge). Les autres colonnes sont ignorées.
+La première ligne doit contenir les noms de colonnes. Obligatoires : `name`, `latitude`, `longitude`. Reconnues : `id_store`, `active` (1/oui), `address1`, `address2`, `postcode`, `city`, `country`, `phone`, `website`, `icone` (`signature` = marqueur cuivré et mention « Soins en institut », `rouge` = marqueur rouge). `enseigne` (sinon déduite du nom grâce à la liste des enseignes des paramètres), `services` (séparés par des virgules, ex. « Soins visage, Épilation »). Les autres colonnes sont ignorées.
+
+Les filtres affichés au-dessus de la carte sont construits à partir des enseignes et des services.
 
 Pour un magasin français dont la latitude/longitude est vide, la position est calculée à partir de l'adresse via le service public de géocodage de l'IGN (data.geopf.fr), dans la limite de 50 par import.
 

@@ -23,6 +23,8 @@ function novi_sl_default_settings() {
 		'sync_auto'     => 0,
 		'jsonld'        => 1,
 		'theme'         => 'dark',
+		'filters'       => 1,
+		'brands'        => "Beauty Success\nGaleries Lafayette\nSo Cut\nBHV",
 	);
 }
 
@@ -77,6 +79,10 @@ function novi_sl_sanitize_settings( $input ) {
 
 	$clean['sync_auto'] = ! empty( $input['sync_auto'] ) && '' !== $clean['sheet_url'] ? 1 : 0;
 	$clean['jsonld']    = ! empty( $input['jsonld'] ) ? 1 : 0;
+	$clean['filters']   = ! empty( $input['filters'] ) ? 1 : 0;
+	$brands             = isset( $input['brands'] ) ? preg_split( '/\r\n|\r|\n/', (string) $input['brands'] ) : array();
+	$brands             = array_slice( array_values( array_unique( array_filter( array_map( 'sanitize_text_field', $brands ) ) ) ), 0, 30 );
+	$clean['brands']    = implode( "\n", $brands );
 	$clean['theme']     = isset( $input['theme'] ) && in_array( $input['theme'], array( 'dark', 'light' ), true ) ? $input['theme'] : $defaults['theme'];
 
 	return $clean;
