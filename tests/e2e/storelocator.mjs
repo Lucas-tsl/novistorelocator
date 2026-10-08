@@ -74,7 +74,9 @@ const input = `${root} .novi-sl__input`;
 	const cards = await page.locator(`${root} .novi-sl__card`).count();
 	check(cards >= 4, `${cards} magasins listés après la recherche`);
 	check(/km|m\b/.test(await page.locator(`${root} .novi-sl__distance`).first().innerText()), 'distance affichée sur chaque fiche');
-	check(/plus proches de Lyon/.test(await page.locator(`${root} .novi-sl__status`).innerText()), 'message de statut annoncé');
+	check(/plus proches de Lyon/.test(await page.locator(`${root} .novi-sl__status`).textContent()), 'résultat annoncé aux lecteurs d\'écran');
+	check(/^\d+ points de vente près de Lyon/.test(await page.locator(`${root} .novi-sl__panel-title`).innerText()), `titre de la liste avec le contexte (« ${await page.locator(`${root} .novi-sl__panel-title`).innerText()} »)`);
+	check((await page.locator(`${root} .novi-sl__status`).boundingBox()).height <= 1, 'pas de phrase en double au-dessus de la carte (ordinateur)');
 	// « J'Y VAIS » : choix de l'application d'itinéraire.
 	const go = page.locator(`${root} .novi-sl__card .novi-sl__go`).first();
 	await go.locator('summary').click();
@@ -235,7 +237,7 @@ const input = `${root} .novi-sl__input`;
 	check(true, '« Rechercher dans cette zone » apparaît quand on déplace la carte');
 	await page.locator(`${root} .novi-sl__area`).click();
 	await page.waitForTimeout(400);
-	check(/dans cette zone/.test(await page.locator(`${root} .novi-sl__status`).innerText()), 'recherche dans la zone visible');
+	check(/dans cette zone/.test(await page.locator(`${root} .novi-sl__status`).textContent()), 'recherche dans la zone visible');
 
 	// Application d'itinéraire mémorisée.
 	await page.locator(`${root} .novi-sl__card .novi-sl__go summary`).first().click();
@@ -248,7 +250,7 @@ const input = `${root} .novi-sl__input`;
 	// Rechargement : dernière recherche et Waze en premier.
 	await page.reload({ waitUntil: 'networkidle' });
 	await page.waitForSelector(`${root} .novi-sl__card`, { timeout: 8000 });
-	check(/Votre dernière recherche/.test(await page.locator(`${root} .novi-sl__status`).innerText()) && /Paris/.test(await page.locator(input).inputValue()), 'dernière recherche réaffichée au retour sur la page');
+	check(/Votre dernière recherche/.test(await page.locator(`${root} .novi-sl__status`).textContent()) && /Paris/.test(await page.locator(input).inputValue()), 'dernière recherche réaffichée au retour sur la page');
 	const firstApp = await page.locator(`${root} .novi-sl__card .novi-sl__go-link`).first().textContent();
 	check(firstApp === 'Waze', `application d'itinéraire choisie proposée en premier (${firstApp})`);
 	check(errors.length === 0, `aucune erreur JavaScript (zone, mémoire)${errors.length ? ' : ' + errors.join(' | ') : ''}`);
@@ -283,7 +285,7 @@ const input = `${root} .novi-sl__input`;
 	const { page, errors, context } = await newPage({ width: 390, height: 844 }, { latitude: 48.8566, longitude: 2.3522 });
 	// Permission déjà accordée : la position est utilisée sans clic.
 	await page.waitForSelector(`${root} .novi-sl__card`, { timeout: 8000 });
-	check(/votre position/.test(await page.locator(`${root} .novi-sl__status`).innerText()), 'géolocalisation déjà autorisée utilisée automatiquement');
+	check(/votre position/.test(await page.locator(`${root} .novi-sl__status`).textContent()), 'géolocalisation déjà autorisée utilisée automatiquement');
 	check(/origin=48\.8566/.test(await page.locator(`${root} .novi-sl__card .novi-sl__go-link--google`).first().getAttribute('href')), 'itinéraire depuis la position du visiteur');
 	check(await page.locator(input).isVisible() && await page.locator(`${root} .novi-sl__results`).isVisible() && !(await page.locator(`${root} .novi-sl__map`).isVisible()), 'mobile : résultats affichés en vue Liste');
 	await page.locator(`${root} .novi-sl__view[data-view="map"]`).click();

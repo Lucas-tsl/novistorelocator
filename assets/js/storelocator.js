@@ -588,9 +588,14 @@
 		this.loadMarkers();
 	}
 
+	/**
+	 * Message annoncé aux lecteurs d'écran. Les erreurs restent visibles ; les informations
+	 * (nombre de résultats) ne sont pas répétées à l'écran, le titre de la liste les affiche déjà.
+	 */
 	StoreLocator.prototype.setStatus = function (message, isError) {
 		this.statusEl.textContent = message || '';
 		this.statusEl.classList.toggle('is-error', !!isError);
+		this.statusEl.classList.toggle('is-info', !isError && !!message);
 	};
 
 	/* ---------- Carte ---------- */
@@ -765,13 +770,18 @@
 		}
 	};
 
-	StoreLocator.prototype.updateListCount = function (count) {
+	StoreLocator.prototype.updateListCount = function (count, context) {
+		if (context !== undefined) {
+			this.listContext = context;
+		}
 		Array.prototype.forEach.call(this.viewButtons, function (button) {
 			if (button.getAttribute('data-view') === 'list') {
 				button.textContent = count ? 'Liste (' + count + ')' : 'Liste';
 			}
 		});
-		this.panelTitle.textContent = count ? count + (count > 1 ? ' points de vente' : ' point de vente') : 'Points de vente';
+		this.panelTitle.textContent = count
+			? count + (count > 1 ? ' points de vente' : ' point de vente') + (this.listContext ? ' ' + this.listContext : '')
+			: 'Points de vente';
 	};
 
 	/* ---------- Filtres par enseigne et service ---------- */
@@ -1125,7 +1135,7 @@
 			});
 			if (!pool.length) {
 				self.renderResults([]);
-				self.updateListCount(0);
+				self.updateListCount(0, '');
 				self.setStatus('Aucun point de vente ne correspond à ces filtres.', true);
 				return;
 			}
@@ -1148,7 +1158,8 @@
 
 			self.resultPool = ranked;
 			self.renderResults(list);
-			self.updateListCount(list.length);
+			var where = options.label === 'votre position' ? 'autour de vous' : 'près de ' + options.label;
+			self.updateListCount(list.length, where);
 			if (isMobile() && !fromFilter) {
 				self.setView(options.focusStore ? 'map' : 'list');
 			}
@@ -1171,7 +1182,7 @@
 
 			var count = list.length;
 			var text = (count > 1 ? 'Les ' + count + ' points de vente les plus proches de ' : 'Le point de vente le plus proche de ') +
-				options.label + ' (le premier à ' + formatDistance(list[0].distance) + ').';
+				options.label + '.';
 			self.setStatus(options.restored ? 'Votre dernière recherche : ' + text.charAt(0).toLowerCase() + text.slice(1) : text);
 		}).catch(function () {
 			self.setStatus('Impossible de charger la liste des points de vente. Veuillez réessayer plus tard.', true);
@@ -1341,12 +1352,13 @@
 		this.resultPool = ranked;
 		var list = ranked.slice(0, Math.max(this.resultsCount, 8));
 		this.renderResults(list);
-		this.updateListCount(list.length);
+		this.updateListCount(list.length, 'dans cette zone');
 		if (!ranked.length) {
 			this.setStatus('Aucun point de vente dans cette zone. Dézoomez ou déplacez la carte.', true);
 			return;
 		}
-		this.setStatus(ranked.length + (ranked.length > 1 ? ' points de vente dans cette zone.' : ' point de vente dans cette zone.'));
+		this.setStatus(ranked.length + (ranked.length > 1 ? ' points de vente dans cette zone.' : ' point de vente dans cette zone.') +
+			(ranked.length > list.length ? ' ' + list.length + ' affichés.' : ''));
 		if (this.root.classList.contains('is-panel-collapsed')) {
 			this.panelOpen.click();
 		}
