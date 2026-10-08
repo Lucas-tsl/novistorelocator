@@ -27,7 +27,7 @@
 - Liste latérale défilant verticalement ; plus de saut de mise en page au survol des suggestions.
 
 ### Expérience utilisateur
-- Palette strictement noir / blanc / gris : boutons, filtres, marqueurs (blancs sur fond sombre, noirs sur fond clair), fond de carte désaturé (inversé en thème sombre). Les réglages de couleur ont été retirés.
+- Palette strictement noir / blanc / gris : boutons, filtres, marqueurs (blancs sur fond sombre, noirs sur fond clair). Le fond de carte garde ses couleurs d'origine. Les réglages de couleur ont été retirés.
 - Grande carte plein cadre avec la liste des magasins superposée à gauche (repliable). Survol lié : survoler une fiche met son marqueur en avant, survoler un marqueur met sa fiche en avant.
 - Fiches hiérarchisées : enseigne en petites capitales, nom du magasin en titre, adresse, état « Ouvert / Fermé », téléphone, alignées à gauche.
 - Micro-animations : apparition des fiches en cascade, marqueur qui grossit au survol et rebondit à la sélection, ouverture des menus et de la fiche ; toutes désactivées si le visiteur a demandé moins d'animations.

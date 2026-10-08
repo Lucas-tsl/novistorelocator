@@ -24,7 +24,6 @@
 	--novi-sl-pin: #000;
 	--novi-sl-pin-stroke: #fff;
 	--novi-sl-cluster-ring: rgba(0, 0, 0, 0.18);
-	--novi-sl-tiles: grayscale(1) contrast(1.05);
 	--novi-sl-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
 	box-sizing: border-box;
@@ -57,7 +56,6 @@
 	--novi-sl-pin: #fff;
 	--novi-sl-pin-stroke: #000;
 	--novi-sl-cluster-ring: rgba(255, 255, 255, 0.22);
-	--novi-sl-tiles: grayscale(1) invert(1) brightness(0.88) contrast(0.92);
 
 	padding: 24px;
 	border-radius: 16px;
@@ -345,10 +343,6 @@
 	inset: 0;
 	z-index: 0;
 	background: var(--novi-sl-raised);
-}
-
-.novi-sl .leaflet-tile-pane {
-	filter: var(--novi-sl-tiles);
 }
 
 .novi-sl__panel {
